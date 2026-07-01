@@ -65,6 +65,27 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .kpi-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none}
 .kpi-ic svg{width:15px;height:15px}
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.kpi{transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,42,90,.14);border-color:#cfd8e6}
+.kpi-i{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:5px;border-radius:50%;background:#dbe2ee;color:#54617a;font-size:9.5px;font-weight:700;font-style:italic;cursor:help;position:relative;vertical-align:middle}
+.kpi-i .tip{position:absolute;bottom:150%;left:50%;transform:translateX(-50%);background:#172554;color:#fff;font-size:11px;font-weight:400;font-style:normal;line-height:1.35;padding:7px 10px;border-radius:8px;width:max-content;max-width:200px;text-align:center;opacity:0;visibility:hidden;transition:opacity .15s;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.22);pointer-events:none}
+.kpi-i .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#172554}
+.kpi-i:hover .tip{opacity:1;visibility:visible}
+.stmt tbody tr[data-ref]{transition:background .12s}
+.stmt tbody tr[data-ref]:hover{background:#f6f9fd}
+.stmt tbody tr.rowsel{background:#fff4e6 !important;box-shadow:inset 3px 0 0 var(--orange)}
+.stmt td.rf.drill{cursor:pointer;color:var(--navy)}
+.stmt td.rf.drill:hover{color:var(--orange);text-decoration:underline}
+.ld-overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px}
+.ld-overlay.open{display:flex}
+.ld-modal{background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:82vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.ld-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;font-weight:600;color:var(--navy)}
+.ld-ref{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin-right:7px}
+.ld-x{border:0;background:#f1f3f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;color:#555;flex:none}
+.ld-x:hover{background:#e6e9ef}
+.ld-b{padding:12px 18px 18px}
+.ld-empty{color:var(--muted);font-size:13px;padding:10px 2px}
+.ld-hint{font-size:11.5px;color:var(--muted);margin:0 0 10px}
 .chartbox{position:relative;height:220px;margin-top:4px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
 .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 17px;margin-bottom:14px}
@@ -632,6 +653,7 @@ function render(){
  else if(id==="parametres"){ v.innerHTML=viewParametres(); wireParam(); }
  else v.innerHTML=viewSoon(id);
  v.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ navTo(b.getAttribute("data-go")); }; });
+ wireTables();
 }
 
 function docHead(title,date){ var s=store.settings;
@@ -667,9 +689,9 @@ function bilanTable(lines, withAmort){
    var cls = L.k==="t"?"tot":(L.k==="g"?"grand":"");
    var net=vN(L.r), net1=vN1(L.r);
    if(withAmort){ var am=amN(L.r), brut=net-am, amd=-am;
-     return '<tr class="'+cls+'"><td class="rf">'+L.r+'</td><td>'+esc(L.t)+'</td><td class="num">'+fmt(brut)+'</td><td class="num">'+fmt(amd)+'</td><td class="num">'+fmt(net)+'</td><td class="num">'+fmt(net1)+'</td><td class="num">'+fvarp(net,net1)+'</td></tr>';
+     return '<tr class="'+cls+'" data-ref="'+L.r+'" data-label="'+esc(L.t)+'"><td class="rf drill">'+L.r+'</td><td>'+esc(L.t)+'</td><td class="num">'+fmt(brut)+'</td><td class="num">'+fmt(amd)+'</td><td class="num">'+fmt(net)+'</td><td class="num">'+fmt(net1)+'</td><td class="num">'+fvarp(net,net1)+'</td></tr>';
    }
-   return '<tr class="'+cls+'"><td class="rf">'+L.r+'</td><td>'+esc(L.t)+'</td><td class="num">'+fmt(net)+'</td><td class="num">'+fmt(net1)+'</td><td class="num">'+fvarp(net,net1)+'</td></tr>';
+   return '<tr class="'+cls+'" data-ref="'+L.r+'" data-label="'+esc(L.t)+'"><td class="rf drill">'+L.r+'</td><td>'+esc(L.t)+'</td><td class="num">'+fmt(net)+'</td><td class="num">'+fmt(net1)+'</td><td class="num">'+fvarp(net,net1)+'</td></tr>';
  }).join("");
  var cg = withAmort
    ? '<colgroup><col style="width:6%"><col style="width:30%"><col style="width:16%"><col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:6%"></colgroup>'
@@ -690,7 +712,7 @@ function viewResultat(){
    var cls=L.k==="s"?"sub":(L.k==="g"?"grand":"");
    var a=cN(L.r), b=cN1(L.r);
    var lab=esc(L.t); if(L.s==="-") lab='<span class="mns">('+lab+')</span>';
-   return '<tr class="'+cls+'"><td class="rf">'+L.r+'</td><td>'+lab+'</td><td class="num">'+fmt(a)+'</td><td class="num">'+fmt(b)+'</td><td class="num">'+fvarp(a,b)+'</td></tr>';
+   return '<tr class="'+cls+'" data-ref="'+L.r+'" data-label="'+esc(L.t)+'"><td class="rf drill">'+L.r+'</td><td>'+lab+'</td><td class="num">'+fmt(a)+'</td><td class="num">'+fmt(b)+'</td><td class="num">'+fvarp(a,b)+'</td></tr>';
  }).join("");
  return docHead("Compte de résultat",store.settings.dateN)+
    '<table class="stmt cr"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'+
@@ -741,7 +763,7 @@ function viewDashboard(){
  var dettes1=vN1("DD")+vN1("DP")+vN1("DT"), solv1=vN1("BZ")/(dettes1||1), couv1=vN1("DF")/(vN1("AZ")||1)*100;
  var mn1=cN1("XI")/(cN1("XB")||1)*100;
  function dv(n,n1,type){ var d,unit,dec; if(type==="amt"){ if(!n1) return {t:"n.a. vs N-1",s:0}; d=(n-n1)/Math.abs(n1)*100; if(d>500) return {t:"▲ +500 % vs N-1",s:1}; if(d<-500) return {t:"▼ −500 % vs N-1",s:-1}; unit=" %"; dec=1; } else if(type==="pts"){ d=n-n1; unit=" pts"; dec=1; } else { d=n-n1; unit=""; dec=2; } var a=Math.abs(d), v=(Math.round(a*Math.pow(10,dec))/Math.pow(10,dec)).toLocaleString("fr-FR"); return {t:(d>=0?"▲ +":"▼ −")+v+unit+" vs N-1",s:d}; }
- function card(l,val,formula,vv,ic,col){ var cls=vv.s>0?"up":(vv.s<0?"down":""); return '<div class="kpi"><div class="kpi-top"><span class="kpi-l">'+l+'</span><span class="kpi-ic" style="color:'+col+';background:'+col+'1f">'+icon(ic)+'</span></div><div class="v">'+val+'</div><div class="d '+cls+'">'+vv.t+'</div><div class="kpi-sub">'+formula+'</div></div>'; }
+ function card(l,val,formula,vv,ic,col){ var cls=vv.s>0?"up":(vv.s<0?"down":""); return '<div class="kpi"><div class="kpi-top"><span class="kpi-l">'+l+'<span class="kpi-i">i<span class="tip">'+esc(formula)+'</span></span></span><span class="kpi-ic" style="color:'+col+';background:'+col+'1f">'+icon(ic)+'</span></div><div class="v">'+val+'</div><div class="d '+cls+'">'+vv.t+'</div></div>'; }
  function pct(x){ return (Math.round(x*10)/10).toLocaleString("fr-FR")+" %"; }
  function nb(x){ return (Math.round(x*100)/100).toLocaleString("fr-FR"); }
  var obs=[];
@@ -986,6 +1008,58 @@ function viewTFTDirect(forPrint, dN, dN1){
    '<div class="foot-note">Présentation SYSCOHADA (Système Normal). Flux d’exploitation présentés selon la méthode directe, calculés à partir des journaux de trésorerie du grand livre ; le tableau boucle par construction avec la trésorerie nette du bilan.</div>';
 }
 
+/* ---------- Drill-down : comptes composant une ligne + surlignage ---------- */
+var AGGB={
+ AZ:["AE","AF","AG","AH","AJ","AK","AL","AM","AN","AP","AR","AS"],
+ BK:["BA","BB","BG","BH","BI","BJ"],
+ BU:["BR","BS","BT"],
+ BZ:["AE","AF","AG","AH","AJ","AK","AL","AM","AN","AP","AR","AS","BA","BB","BG","BH","BI","BJ","BR","BS","BT","BV"],
+ CP:["CA","CB","CD","CE","CF","CG","CH","CL","CM"],
+ DD:["DA","DB","DC"],
+ DF:["CA","CB","CD","CE","CF","CG","CH","CL","CM","DA","DB","DC"],
+ DP:["DH","DI","DJ","DK","DM","DN"],
+ DT:["DQ","DR"],
+ DZ:["CA","CB","CD","CE","CF","CG","CH","CL","CM","DA","DB","DC","DH","DI","DJ","DK","DM","DN","DQ","DR","DV"]
+};
+function accountsForLine(rows, ov, ref){
+ var leaves=AGGB[ref]||[ref]; var set={}; leaves.forEach(function(x){set[x]=1;});
+ var out=[];
+ (rows||[]).forEach(function(r){
+   var a=String(r.a), s=Number(r.s)||0, rf; var fo=ov&&ov[a];
+   if(fo) rf=fo; else { var c=a.charAt(0); rf=(c==="6"||c==="7"||c==="8")?(E.classifyR(a).ref):(E.classifyB(a,s).ref); }
+   if(set[rf]) out.push({a:a,l:r.l||"",s:s});
+ });
+ out.sort(function(x,y){return x.a<y.a?-1:(x.a>y.a?1:0);});
+ return out;
+}
+function showLineDetail(ref, label){
+ if(!store.computed.N) return;
+ var ov=store.settings.overrides||{};
+ var accs=accountsForLine(store.data.N, ov, ref);
+ var n1={}; (store.data.N1||[]).forEach(function(r){ n1[String(r.a)]=Number(r.s)||0; });
+ var body, tot=0, tot1=0;
+ if(!accs.length){ body='<div class="ld-empty">Cette ligne est un <b>solde calculé</b> (sous-total ou résultat de l’exercice) — elle n’est pas rattachée directement à des comptes.</div>'; }
+ else {
+   var trs=accs.map(function(x){ var s1=n1[x.a]; tot+=x.s; if(s1!=null) tot1+=s1; return '<tr><td class="rf">'+esc(x.a)+'</td><td>'+esc(x.l)+'</td><td class="num">'+fmt(x.s)+'</td><td class="num">'+(s1!=null?fmt(s1):"–")+'</td></tr>'; }).join("");
+   body='<div class="ld-hint">'+accs.length+' compte'+(accs.length>1?'s':'')+' composent cette ligne. Cliquez ailleurs ou ✕ pour fermer.</div>'+
+     '<table class="mini"><tr><th>Compte</th><th>Libellé</th><th class="num">'+esc(store.settings.exN)+'</th><th class="num">'+esc(store.settings.exN1)+'</th></tr>'+trs+
+     '<tr class="tot"><td></td><td><b>Total</b></td><td class="num"><b>'+fmt(tot)+'</b></td><td class="num">'+fmt(tot1)+'</td></tr></table>';
+ }
+ var o=document.getElementById("ldOverlay"); if(!o){ o=document.createElement("div"); o.id="ldOverlay"; o.className="ld-overlay"; document.body.appendChild(o); }
+ o.innerHTML='<div class="ld-modal"><div class="ld-head"><div><span class="ld-ref">'+esc(ref)+'</span>'+esc(label||"")+'</div><button class="ld-x" id="ldX" aria-label="Fermer">✕</button></div><div class="ld-b">'+body+'</div></div>';
+ o.classList.add("open");
+ o.onclick=function(e){ if(e.target===o||e.target.id==="ldX"||(e.target.closest&&e.target.closest("#ldX"))) o.classList.remove("open"); };
+}
+function wireTables(){ if(window.__fxTW) return; window.__fxTW=true;
+ document.addEventListener("click", function(e){
+   if(!e.target||!e.target.closest) return;
+   if(e.target.closest("#ldOverlay")) return;
+   var tr=e.target.closest("tr[data-ref]"); if(!tr) return;
+   if(e.target.closest("td.rf.drill")){ showLineDetail(tr.getAttribute("data-ref"), tr.getAttribute("data-label")||""); }
+   else { tr.classList.toggle("rowsel"); }
+ });
+ document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ var o=document.getElementById("ldOverlay"); if(o) o.classList.remove("open"); } });
+}
 /* ---------- Paramètres ---------- */
 function field(id,label,val,type){ return '<div class="field"><label>'+label+'</label><input class="sel" id="'+id+'" value="'+esc(val)+'"></div>'; }
 function viewParametres(){
