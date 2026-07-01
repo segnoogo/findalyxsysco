@@ -55,11 +55,13 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .hello{font-size:20px;font-weight:600;color:var(--navy)}
 .subtle{font-size:13px;color:var(--muted);margin:4px 0 14px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
-.kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+.kpi{background:#fff;border:1px solid #ECEFF3;border-radius:12px;padding:13px 15px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 4px 12px rgba(16,24,40,.06)}
 .kpi .l{font-size:12px;color:var(--muted)}
-.kpi .v{font-size:20px;font-weight:600;color:var(--navy);margin-top:4px;font-variant-numeric:tabular-nums}
-.kpi .d{font-size:12px;margin-top:3px;color:var(--muted)}
-.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}
+.kpi .v{font-size:22px;font-weight:700;color:var(--navy);margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .d{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:7px;padding:2px 9px;border-radius:20px;background:#eef1f5;color:var(--muted);line-height:1.6}
+.kpi .d.up{background:#e7f4ee;color:#0f6b3c}.kpi .d.down{background:#fdeceb;color:#a3271b}
+.kpi .d.up::before{content:"▲";font-size:8px}
+.kpi .d.down::before{content:"▼";font-size:8px}
 .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
 .kpi-l{font-size:12px;color:var(--muted)}
 .kpi-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -93,7 +95,7 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .ld-hint{font-size:11.5px;color:var(--muted);margin:0 0 10px}
 .chartbox{position:relative;height:220px;margin-top:4px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
-.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:15px 17px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #ECEFF3;border-radius:12px;padding:15px 17px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px rgba(16,24,40,.06)}
 .ct{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px}
 .ck{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
 .ck:first-of-type{border-top:none}
@@ -109,18 +111,18 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
 .lg b{color:var(--navy);font-variant-numeric:tabular-nums}
 .actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
-.stmt{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:10px}
-.stmt thead th{background:var(--navy);color:#fff;font-size:12px;font-weight:600;text-align:left;padding:9px 10px}
+.stmt{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #ECEFF3;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px rgba(16,24,40,.06)}
+.stmt thead th{background:var(--navy);color:#fff;font-size:12px;font-weight:600;text-align:left;padding:10px 12px}
 .stmt thead th{position:sticky;top:var(--topH,56px);z-index:2}
 .stmt thead th:first-child{border-top-left-radius:10px}
 .stmt thead th:last-child{border-top-right-radius:10px}
 .stmt tbody tr:last-child td:first-child{border-bottom-left-radius:10px}
 .stmt tbody tr:last-child td:last-child{border-bottom-right-radius:10px}
 .stmt th.num,.stmt td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.stmt td{padding:7px 10px;border-top:1px solid #eef0f3}
+.stmt td{padding:9px 11px;border-top:1px solid #f0f2f5}
 .stmt td.rf{color:var(--muted);font-size:11.5px;width:40px}
 .stmt tr.h td{background:var(--lblue);color:var(--navy);font-size:12px;font-weight:600}
-.stmt tr.tot td{background:#fafbfc;font-weight:600;color:var(--navy)}
+.stmt tr.tot td{background:#eef1f7;font-weight:600;color:var(--navy)}
 .stmt tr.sub td{background:#fff7ee;font-weight:600;color:var(--navy)}
 .stmt tr.grand td{background:var(--navy);color:#fff;font-weight:700}
 .stmt tr.ov td{background:#fff7ee}
