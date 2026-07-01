@@ -67,6 +67,8 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:3px}
 .kpi{transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
 .kpi:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,42,90,.14);border-color:#cfd8e6}
+.card:has(canvas){transition:transform .16s ease, box-shadow .16s ease}
+.card:has(canvas):hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,42,90,.14)}
 .kpi-i{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:5px;border-radius:50%;background:#dbe2ee;color:#54617a;font-size:9.5px;font-weight:700;font-style:italic;cursor:help;position:relative;vertical-align:middle}
 .kpi-i .tip{position:absolute;bottom:150%;left:50%;transform:translateX(-50%);background:#172554;color:#fff;font-size:11px;font-weight:400;font-style:normal;line-height:1.35;padding:7px 10px;border-radius:8px;width:max-content;max-width:200px;text-align:center;opacity:0;visibility:hidden;transition:opacity .15s;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.22);pointer-events:none}
 .kpi-i .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#172554}
