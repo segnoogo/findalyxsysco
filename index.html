@@ -1040,17 +1040,35 @@ function showLineDetail(ref, label){
  var accs=accountsForLine(store.data.N, ov, ref);
  var n1={}; (store.data.N1||[]).forEach(function(r){ n1[String(r.a)]=Number(r.s)||0; });
  var body, tot=0, tot1=0;
- if(!accs.length){ body='<div class="ld-empty">Cette ligne est un <b>solde calculé</b> (sous-total ou résultat de l’exercice) — elle n’est pas rattachée directement à des comptes.</div>'; }
+ if(!accs.length){ window.__LDCUR__=null; body='<div class="ld-empty">Cette ligne est un <b>solde calculé</b> (sous-total ou résultat de l’exercice) — elle n’est pas rattachée directement à des comptes.</div>'; }
  else {
-   var trs=accs.map(function(x){ var s1=n1[x.a]; tot+=x.s; if(s1!=null) tot1+=s1; return '<tr><td class="rf">'+esc(x.a)+'</td><td>'+esc(x.l)+'</td><td class="num">'+fmt(x.s)+'</td><td class="num">'+(s1!=null?fmt(s1):"–")+'</td></tr>'; }).join("");
+   var _rows=[]; var trs=accs.map(function(x){ var s1=n1[x.a]; tot+=x.s; if(s1!=null) tot1+=s1; _rows.push({a:x.a,l:x.l||"",s:x.s,s1:(s1!=null?s1:null)}); return '<tr><td class="rf">'+esc(x.a)+'</td><td>'+esc(x.l)+'</td><td class="num">'+fmt(x.s)+'</td><td class="num">'+(s1!=null?fmt(s1):"–")+'</td></tr>'; }).join("");
    body='<div class="ld-hint">'+accs.length+' compte'+(accs.length>1?'s':'')+' composent cette ligne. Cliquez ailleurs ou ✕ pour fermer.</div>'+
      '<table class="mini"><tr><th>Compte</th><th>Libellé</th><th class="num">'+esc(store.settings.exN)+'</th><th class="num">'+esc(store.settings.exN1)+'</th></tr>'+trs+
-     '<tr class="tot"><td></td><td><b>Total</b></td><td class="num"><b>'+fmt(tot)+'</b></td><td class="num">'+fmt(tot1)+'</td></tr></table>';
+     '<tr class="tot"><td></td><td><b>Total</b></td><td class="num"><b>'+fmt(tot)+'</b></td><td class="num">'+fmt(tot1)+'</td></tr></table>'+'<div style="margin-top:14px;text-align:right"><button class="btn primary" id="ldXls">Télécharger ce détail en Excel</button></div>'; window.__LDCUR__={ref:ref,label:label||"",rows:_rows,tot:tot,tot1:tot1,exN:store.settings.exN,exN1:store.settings.exN1,entite:store.settings.entite};
  }
  var o=document.getElementById("ldOverlay"); if(!o){ o=document.createElement("div"); o.id="ldOverlay"; o.className="ld-overlay"; document.body.appendChild(o); }
  o.innerHTML='<div class="ld-modal"><div class="ld-head"><div><span class="ld-ref">'+esc(ref)+'</span>'+esc(label||"")+'</div><button class="ld-x" id="ldX" aria-label="Fermer">✕</button></div><div class="ld-b">'+body+'</div></div>';
- o.classList.add("open");
+ o.classList.add("open"); var _xb=document.getElementById("ldXls"); if(_xb) _xb.onclick=function(ev){ ev.stopPropagation(); exportLineDetailExcel(); };
  o.onclick=function(e){ if(e.target===o||e.target.id==="ldX"||(e.target.closest&&e.target.closest("#ldX"))) o.classList.remove("open"); };
+}
+function exportLineDetailExcel(){
+ var C=window.__LDCUR__; if(!C||!C.rows||!C.rows.length){ return; }
+ if(typeof ExcelJS==="undefined"){ alert("Le module Excel n'est pas encore chargé, réessaie dans un instant."); return; }
+ var wb=new ExcelJS.Workbook(); var ws=wb.addWorksheet("Détail");
+ ws.mergeCells("A1:D1"); ws.getCell("A1").value=(C.entite||"Société")+" — Détail de la ligne"; ws.getCell("A1").font={bold:true,size:13,color:{argb:"FF172554"}};
+ ws.mergeCells("A2:D2"); ws.getCell("A2").value="["+C.ref+"] "+C.label; ws.getCell("A2").font={italic:true,color:{argb:"FF64748B"}};
+ ws.mergeCells("A3:D3"); ws.getCell("A3").value="Montants en "+uniteLabel(); ws.getCell("A3").font={size:9,color:{argb:"FF94A3B8"}};
+ var hr=5; var head=ws.getRow(hr); head.values=["Compte","Libellé","Exercice "+C.exN,"Exercice "+C.exN1]; head.font={bold:true,color:{argb:"FFFFFFFF"}}; head.eachCell(function(c){ c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF172554"}}; c.alignment={vertical:"middle",horizontal:"center"}; });
+ var r=hr+1; C.rows.forEach(function(x){ var row=ws.getRow(r++); row.getCell(1).value=x.a; row.getCell(2).value=x.l; row.getCell(3).value=nUx(x.s); row.getCell(3).numFmt="#,##0"; if(x.s1!=null){ row.getCell(4).value=nUx(x.s1); row.getCell(4).numFmt="#,##0"; } });
+ var tr=ws.getRow(r); tr.getCell(2).value="Total"; tr.getCell(2).font={bold:true};
+ tr.getCell(3).value={formula:"SUM(C"+(hr+1)+":C"+(r-1)+")",result:nUx(C.tot)}; tr.getCell(3).numFmt="#,##0"; tr.getCell(3).font={bold:true};
+ tr.getCell(4).value={formula:"SUM(D"+(hr+1)+":D"+(r-1)+")",result:nUx(C.tot1)}; tr.getCell(4).numFmt="#,##0"; tr.getCell(4).font={bold:true};
+ [1,2,3,4].forEach(function(i){ tr.getCell(i).border={top:{style:"medium",color:{argb:"FF172554"}}}; });
+ ws.getColumn(1).width=12; ws.getColumn(2).width=48; ws.getColumn(3).width=18; ws.getColumn(4).width=18;
+ ws.views=[{state:"frozen",ySplit:hr}];
+ var safe=(C.ref+"_"+(C.label||"")).replace(/[^0-9A-Za-zÀ-ÿ]+/g,"_").replace(/^_+|_+$/g,"").slice(0,44);
+ wb.xlsx.writeBuffer().then(function(buf){ dlBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), "Detail_"+(safe||"ligne")+".xlsx"); });
 }
 function wireTables(){ if(window.__fxTW) return; window.__fxTW=true;
  document.addEventListener("click", function(e){
