@@ -594,7 +594,7 @@ function recompute(){
 
 /* ---------- Layout ---------- */
 function licFootHTML(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); if(dd>30) return ""; var cls=dd<0?" lic-foot-exp":" lic-foot-soon"; var txt=dd<0?"Abonnement expiré — à renouveler":("Abonnement : expire dans "+dd+" j<br>("+esc(L.exp)+")"); return '<div class="sfoot-lic'+cls+'">'+txt+'</div>'; }catch(e){ return ""; } }
-function licStatusCard(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); var st=dd<0?["Expiré","exp"]:(dd<=30?["Expire bientôt","soon"]:["Actif","ok"]); var md=L.mode==="online"?'<span class="pill ok">En ligne</span>':(L.mode==="grace"?('Hors-ligne (vérifié le '+esc(L.last||"?")+')'):(L.mode==="owner"?'Clé propriétaire (hors-ligne)':'—')); return '<div class="card"><div class="ct">Abonnement Findalyx</div><table class="kv"><tr><td>Titulaire de la licence</td><td>'+esc(L.customer||"—")+'</td></tr><tr><td>Statut</td><td><span class="pill '+st[1]+'">'+st[0]+'</span></td></tr><tr><td>Vérification</td><td>'+md+'</td></tr><tr><td>Expire le</td><td>'+esc(L.exp)+'</td></tr><tr><td>Jours restants</td><td>'+(dd<0?"—":dd+" jours")+'</td></tr></table><details class="wz-more" style="margin-top:12px"><summary>Renouveler / saisir une nouvelle clé</summary><div style="margin-top:8px"><textarea id="licRenew" class="lic-in" placeholder="Colle ici ta nouvelle clé"></textarea><div id="licRenewErr" class="lic-err"></div><button class="btn primary" id="licRenewBtn">Mettre à jour la licence</button></div></details></div>'; }catch(e){ return ""; } }
+function licStatusCard(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); var st=dd<0?["Expiré","exp"]:(dd<=30?["Expire bientôt","soon"]:["Actif","ok"]); var md=L.mode==="online"?'<span class="pill ok">En ligne</span>':(L.mode==="grace"?('Hors-ligne (vérifié le '+esc(L.last||"?")+')'):(L.mode==="owner"?'Clé propriétaire (hors-ligne)':'—')); return '<div class="card"><div class="ct">Abonnement Findalyx</div><table class="kv"><tr><td>Titulaire de la licence</td><td>'+esc(L.customer||"—")+'</td></tr><tr><td>Statut</td><td><span class="pill '+st[1]+'">'+st[0]+'</span></td></tr><tr><td>Vérification</td><td>'+md+'</td></tr><tr><td>Expire le</td><td>'+esc(L.exp)+'</td></tr><tr><td>Jours restants</td><td>'+(dd<0?"—":dd+" jours")+'</td></tr><tr><td>Societes analysees</td><td>'+quotaUsed()+(quotaMax()>0?(" / "+quotaMax()):" (illimite)")+'</td></tr></table><details class="wz-more" style="margin-top:12px"><summary>Renouveler / saisir une nouvelle clé</summary><div style="margin-top:8px"><textarea id="licRenew" class="lic-in" placeholder="Colle ici ta nouvelle clé"></textarea><div id="licRenewErr" class="lic-err"></div><button class="btn primary" id="licRenewBtn">Mettre à jour la licence</button></div></details></div>'; }catch(e){ return ""; } }
 function buildShell(){
  var nav = NAV.map(function(n){
    if(n.sep) return '<div class="sep"></div>';
@@ -834,7 +834,7 @@ function readBalance(file, slot){
      var best=null,bestN=-1; wb.SheetNames.forEach(function(nm){ var aoa=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,blankrows:false}); if(aoa.length>bestN){bestN=aoa.length;best=aoa;} });
      var rows=parseAOA(best);
      if(!rows.length){ alert("Aucun compte détecté. Vérifie l'en-tête (Compte / Libellé / Solde)."); return; }
-     forkIfDemo(); store.data[slot]=rows; recompute(); persistActive(); navTo("import");
+     if(!forkIfDemo()) return; store.data[slot]=rows; recompute(); persistActive(); navTo("import");
    }catch(err){ alert("Erreur de lecture : "+err.message); }
  };
  rd.readAsArrayBuffer(file);
@@ -909,7 +909,7 @@ function readGL(file, slot){
      var best=null,bestN=-1; wb.SheetNames.forEach(function(nm){ var aoa=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,blankrows:false}); if(aoa.length>bestN){bestN=aoa.length;best=aoa;} });
      var res=glToBalance(best);
      if(res.err||!res.rows.length){ alert("Grand livre : "+(res.err||"aucun compte détecté.")); return; }
-     forkIfDemo(); store.data[slot]=res.rows;
+     if(!forkIfDemo()) return; store.data[slot]=res.rows;
      var year=(slot==="N")?store.settings.exN:store.settings.exN1;
      if(res.dividendes>0) setManualYear(year, "dividendes", String(Math.round(res.dividendes))); try{ var _dt=tftDirect(best); if(_dt) setManualYear(year,"tftDirectJSON",JSON.stringify(_dt)); else setManualYear(year,"tftDirectJSON",""); }catch(_e){}
      var bal=(res.ecartO===0&&res.ecartC===0);
@@ -1577,13 +1577,13 @@ function persistActive(){ if(store.activeId && store.activeId!=="demo"){ store.a
 function activateAnalysis(id){ var a=store.analyses[id]; if(!a) return; store.activeId=id; store.settings={ entite:a.name||"", pays:a.pays||"Sénégal", exN:a.exN||"2024", exN1:a.exN1||"2023", dateN:a.dateN||("31/12/"+(a.exN||"2024")), dateN1:a.dateN1||("31/12/"+(a.exN1||"2023")), unite:a.unite||"FCFA", ident:a.ident||{}, manual:a.manual||{}, noteComments:a.comments||{}, overrides:a.overrides||{}, fiscal:a.fiscal||{isRate:null,lines:{}} }; store.data={ N:a.dataN||null, N1:a.dataN1||null }; store.computed={}; recompute(); try{localStorage.setItem("fx_active",id);}catch(e){} }
 function analysesList(){ return Object.keys(store.analyses).map(function(id){ return store.analyses[id]; }).sort(function(a,b){ if(a.id==="demo")return 1; if(b.id==="demo")return -1; return (b.created||0)-(a.created||0); }); }
 function switchTo(id){ if(id===store.activeId){ return; } persistActive(); activateAnalysis(id); buildShell(); navTo("accueil"); }
-function deleteAnalysis(id){ if(id==="demo")return; delete store.analyses[id]; saveAnalyses(); if(store.activeId===id){ activateAnalysis("demo"); } buildShell(); navTo("accueil"); }
-function forkIfDemo(){ if(store.activeId!=="demo") return; var id="a"+Date.now(); store.activeId=id; store.settings={ entite:"", pays:store.settings.pays, exN:store.settings.exN, exN1:store.settings.exN1, dateN:store.settings.dateN, dateN1:store.settings.dateN1, unite:"FCFA", ident:{}, manual:{}, noteComments:{}, overrides:{}, fiscal:{isRate:null,lines:{}} }; store.data={N:null,N1:null}; store.analyses[id]=snapshotActive(); try{localStorage.setItem("fx_active",id);}catch(e){} }
+function deleteAnalysis(id){ if(id==="demo")return; delete store.analyses[id]; saveAnalyses(); try{ societeApi("remove",{societe_id:id}); }catch(e){} if(store.activeId===id){ activateAnalysis("demo"); } buildShell(); navTo("accueil"); }
+function forkIfDemo(){ if(store.activeId!=="demo") return true; if(quotaReached()){ alert(quotaMsg()); return false; } var id="a"+Date.now(); store.activeId=id; store.settings={ entite:"", pays:store.settings.pays, exN:store.settings.exN, exN1:store.settings.exN1, dateN:store.settings.dateN, dateN1:store.settings.dateN1, unite:"FCFA", ident:{}, manual:{}, noteComments:{}, overrides:{}, fiscal:{isRate:null,lines:{}} }; store.data={N:null,N1:null}; store.analyses[id]=snapshotActive(); try{localStorage.setItem("fx_active",id);}catch(e){} try{ registerSociete(id,store.settings.entite||""); }catch(e){} return true; }
 function switcherMenuHTML(){ var list=analysesList(); var items=list.map(function(a){ var act=a.id===store.activeId; return '<div class="sw-item'+(act?" act":"")+'" data-aid="'+a.id+'"><div class="sw-i-main"><div class="sw-i-name">'+(esc(a.name)||"(sans nom)")+(a.demo?' <span class="sw-demo">démo</span>':'')+'</div><div class="sw-i-sub">Exercice '+esc(a.exN)+'</div></div>'+(a.demo?"":'<span class="sw-del" data-del="'+a.id+'" title="Supprimer">✕</span>')+'</div>'; }).join(""); return '<div class="sw-new" id="swNew">+ Nouvelle analyse</div><div class="sw-list">'+items+'</div>'; }
 function wireSwitcher(){ var m=document.getElementById("swMenu"); if(!m) return; m.innerHTML=switcherMenuHTML(); var b=document.getElementById("swBtn"); if(b) b.onclick=function(e){ e.stopPropagation(); m.classList.toggle("open"); }; var nw=document.getElementById("swNew"); if(nw) nw.onclick=function(e){ e.stopPropagation(); m.classList.remove("open"); showWizard(); }; m.querySelectorAll(".sw-item").forEach(function(it){ it.onclick=function(e){ if(e.target&&e.target.getAttribute&&e.target.getAttribute("data-del")) return; switchTo(it.getAttribute("data-aid")); }; }); m.querySelectorAll(".sw-del").forEach(function(d){ d.onclick=function(e){ e.stopPropagation(); if(window.confirm("Supprimer définitivement cette analyse ?")) deleteAnalysis(d.getAttribute("data-del")); }; }); }
 /* ---------- Wizard ---------- */
 var WIZ=null;
-function showWizard(){ WIZ={ step:1, name:"", pays:(store.settings.pays||"Sénégal"), unite:"FCFA", exN:(store.settings.exN||"2024"), exN1:(store.settings.exN1||"2023"), ident:{}, dataN:null, dataN1:null, eqN:null, eqN1:null, glN:false, glN1:false, divN:0, divN1:0 }; renderWizard(); }
+function showWizard(){ if(quotaReached()){ alert(quotaMsg()); return; } WIZ={ step:1, name:"", pays:(store.settings.pays||"Sénégal"), unite:"FCFA", exN:(store.settings.exN||"2024"), exN1:(store.settings.exN1||"2023"), ident:{}, dataN:null, dataN1:null, eqN:null, eqN1:null, glN:false, glN1:false, divN:0, divN1:0 }; renderWizard(); }
 function closeWizard(){ WIZ=null; var o=document.getElementById("wizOverlay"); if(o) o.parentNode.removeChild(o); }
 function renderWizard(){ var o=document.getElementById("wizOverlay"); if(!o){ o=document.createElement("div"); o.id="wizOverlay"; o.className="wiz-overlay"; document.body.appendChild(o); } o.innerHTML=wizardHTML(); wireWizard(); }
 function wzStepInd(n,label){ return '<div class="wz-step'+(WIZ.step===n?" act":"")+(WIZ.step>n?" done":"")+'"><span class="wz-num">'+(WIZ.step>n?"✓":n)+'</span>'+label+'</div>'; }
@@ -1613,7 +1613,7 @@ function readWizFile(file,cb){ if(typeof XLSX==="undefined"){ alert("Lecture Exc
 function readWizBalance(file,slot){ readWizFile(file,function(best){ var rows=parseAOA(best); if(!rows.length){ alert("Aucun compte détecté. Vérifie l’en-tête (Compte / Libellé / Solde)."); return; } var Y=E.computeYear(rows,{}); var eq=Y.bil.BZ-Y.bil.DZ; if(slot==="N"){ WIZ.dataN=rows; WIZ.eqN=eq; } else { WIZ.dataN1=rows; WIZ.eqN1=eq; } renderWizard(); }); }
 function readWizGL(file,slot){ readWizFile(file,function(best){ var res=glToBalance(best); if(res.err||!res.rows.length){ alert("Grand livre : "+(res.err||"aucun compte détecté.")); return; } var _dt=null; try{_dt=tftDirect(best);}catch(e){} var Y=E.computeYear(res.rows,{}); var eq=Y.bil.BZ-Y.bil.DZ; if(slot==="N"){ WIZ.dataN=res.rows; WIZ.eqN=eq; WIZ.glN=true; WIZ.divN=res.dividendes||0; WIZ.tftDN=_dt; } else { WIZ.dataN1=res.rows; WIZ.eqN1=eq; WIZ.glN1=true; WIZ.divN1=res.dividendes||0; WIZ.tftDN1=_dt; } renderWizard(); }); }
 function wireWizard(){ var g=function(id){ return document.getElementById(id); }; if(g("wzClose")) g("wzClose").onclick=closeWizard; if(g("wzCancel")) g("wzCancel").onclick=closeWizard; if(g("wzBack")) g("wzBack").onclick=function(){ wizSaveStep(); WIZ.step--; renderWizard(); }; if(g("wzNext")) g("wzNext").onclick=function(){ if(!wizSaveStep()) return; WIZ.step++; renderWizard(); }; if(g("wzFinish")) g("wzFinish").onclick=finishWizard; document.querySelectorAll("[data-wzbal]").forEach(function(inp){ inp.onchange=function(){ var f=inp.files[0]; if(f) readWizBalance(f,inp.getAttribute("data-wzbal")); }; }); document.querySelectorAll("[data-wzgl]").forEach(function(inp){ inp.onchange=function(){ var f=inp.files[0]; if(f) readWizGL(f,inp.getAttribute("data-wzgl")); }; }); }
-function finishWizard(){ if(!WIZ.name){ WIZ.step=1; renderWizard(); alert("Indique la dénomination sociale (étape 1)."); return; } if(!WIZ.dataN){ WIZ.step=2; renderWizard(); alert("Importe au moins la balance "+WIZ.exN+" (étape 2)."); return; } var id="a"+Date.now(); var man={}; if(WIZ.divN>0) man[WIZ.name+"|"+WIZ.exN]={dividendes:String(Math.round(WIZ.divN))}; if(WIZ.divN1>0){ var k1=WIZ.name+"|"+WIZ.exN1; man[k1]=man[k1]||{}; man[k1].dividendes=String(Math.round(WIZ.divN1)); } if(WIZ.tftDN){ var kdN=WIZ.name+"|"+WIZ.exN; man[kdN]=man[kdN]||{}; man[kdN].tftDirectJSON=JSON.stringify(WIZ.tftDN); } if(WIZ.tftDN1){ var kdN1=WIZ.name+"|"+WIZ.exN1; man[kdN1]=man[kdN1]||{}; man[kdN1].tftDirectJSON=JSON.stringify(WIZ.tftDN1); } store.analyses[id]={ id:id, name:WIZ.name, pays:WIZ.pays, exN:WIZ.exN, exN1:WIZ.exN1, dateN:"31/12/"+WIZ.exN, dateN1:"31/12/"+WIZ.exN1, unite:WIZ.unite||"FCFA", ident:WIZ.ident||{}, manual:man, comments:{}, overrides:{}, fiscal:{isRate:null,lines:{}}, dataN:WIZ.dataN, dataN1:WIZ.dataN1||null, created:Date.now() }; saveAnalyses(); activateAnalysis(id); closeWizard(); buildShell(); navTo("accueil"); }
+function finishWizard(){ if(!WIZ.name){ WIZ.step=1; renderWizard(); alert("Indique la dénomination sociale (étape 1)."); return; } if(!WIZ.dataN){ WIZ.step=2; renderWizard(); alert("Importe au moins la balance "+WIZ.exN+" (étape 2)."); return; } var id="a"+Date.now(); var man={}; if(WIZ.divN>0) man[WIZ.name+"|"+WIZ.exN]={dividendes:String(Math.round(WIZ.divN))}; if(WIZ.divN1>0){ var k1=WIZ.name+"|"+WIZ.exN1; man[k1]=man[k1]||{}; man[k1].dividendes=String(Math.round(WIZ.divN1)); } if(WIZ.tftDN){ var kdN=WIZ.name+"|"+WIZ.exN; man[kdN]=man[kdN]||{}; man[kdN].tftDirectJSON=JSON.stringify(WIZ.tftDN); } if(WIZ.tftDN1){ var kdN1=WIZ.name+"|"+WIZ.exN1; man[kdN1]=man[kdN1]||{}; man[kdN1].tftDirectJSON=JSON.stringify(WIZ.tftDN1); } store.analyses[id]={ id:id, name:WIZ.name, pays:WIZ.pays, exN:WIZ.exN, exN1:WIZ.exN1, dateN:"31/12/"+WIZ.exN, dateN1:"31/12/"+WIZ.exN1, unite:WIZ.unite||"FCFA", ident:WIZ.ident||{}, manual:man, comments:{}, overrides:{}, fiscal:{isRate:null,lines:{}}, dataN:WIZ.dataN, dataN1:WIZ.dataN1||null, created:Date.now() }; saveAnalyses(); activateAnalysis(id); try{ registerSociete(id,(store.analyses[id]&&store.analyses[id].name)||""); }catch(e){} closeWizard(); buildShell(); navTo("accueil"); }
 
 /* ================= Licence / abonnement (vérification en ligne + secours hors-ligne) ================= */
 function _licB64(s){ s=String(s).replace(/\s+/g,""); var bin=atob(s); var u=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
@@ -1638,7 +1638,18 @@ function _licRollback(){ try{ var ls=localStorage.getItem("fx_lastseen"), t=_lic
 function _licDevice(){ try{ var d=localStorage.getItem("fx_device"); if(!d){ d="dev-"+Math.random().toString(36).slice(2)+"-"+Date.now().toString(36); localStorage.setItem("fx_device",d); } return d; }catch(e){ return "dev-x"; } }
 /* --- Cache de secours hors-ligne --- */
 function _graceGet(){ try{ return JSON.parse(localStorage.getItem("fx_lic_cache")||"null"); }catch(e){ return null; } }
-function _graceSet(code,customer,exp){ try{ localStorage.setItem("fx_lic_cache", JSON.stringify({code:code,customer:customer,exp:exp,last:_licToday()})); }catch(e){} }
+function _graceSet(code,customer,exp,maxSoc,usedSoc){ try{ localStorage.setItem("fx_lic_cache", JSON.stringify({code:code,customer:customer,exp:exp,last:_licToday(),maxSoc:(maxSoc==null?0:maxSoc),usedSoc:(usedSoc==null?0:usedSoc)})); }catch(e){} }
+/* --- Quota de societes (controle serveur) --- */
+var LIC_QUOTA={max:0,used:0,known:false};
+function _licCode(){ try{ return (localStorage.getItem("fx_licence")||"").replace(/\s+/g,""); }catch(e){ return ""; } }
+function _realAnalyses(){ try{ return Object.keys(store.analyses||{}).filter(function(id){ return id!=="demo"; }); }catch(e){ return []; } }
+function quotaMax(){ return LIC_QUOTA.max||0; }
+function quotaUsed(){ return Math.max(LIC_QUOTA.used||0, _realAnalyses().length); }
+function quotaReached(){ var m=quotaMax(); return m>0 && quotaUsed()>=m; }
+function quotaMsg(){ var m=quotaMax(); return "Ta licence Findalyx autorise "+m+" societe"+(m>1?"s":"")+". Tu en as deja "+quotaUsed()+". Supprime une societe existante (menu en haut a gauche) ou passe a une offre superieure pour en analyser davantage."; }
+function societeApi(op,extra){ var url=window.__SUPA_FN__||"",key=window.__SUPA_KEY__||"",code=_licCode(); if(!url||!key||!code) return Promise.resolve({ok:false,offline:true}); var body=Object.assign({cle:code,op:op},extra||{}); return fetch(url,{method:"POST",headers:{"Content-Type":"application/json","apikey":key,"Authorization":"Bearer "+key},body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(d){ if(d&&d.ok){ if(typeof d.used==="number") LIC_QUOTA.used=d.used; if(typeof d.max==="number") LIC_QUOTA.max=d.max; LIC_QUOTA.known=true; if(window.__LICINFO__){ window.__LICINFO__.usedSoc=LIC_QUOTA.used; window.__LICINFO__.maxSoc=LIC_QUOTA.max; } } return d||{ok:false}; }).catch(function(){ return {ok:false,offline:true}; }); }
+function syncSocietes(){ var ids=_realAnalyses(); if(!ids.length) return societeApi("count",{}); var list=ids.map(function(id){ var a=store.analyses[id]||{}; return {id:id,libelle:(a.name||"")}; }); return societeApi("sync",{list:list}); }
+function registerSociete(id,libelle){ return societeApi("add",{societe_id:id,libelle:libelle||""}).then(function(d){ if(d&&d.ok===false&&d.raison==="quota_societes"){ try{ delete store.analyses[id]; saveAnalyses(); }catch(e){} if(store.activeId===id){ activateAnalysis("demo"); } try{ buildShell(); navTo("accueil"); }catch(e){} alert("Quota de societes atteint (une autre session a utilise la derniere place). Cette analyse n'a pas ete enregistree."); } return d; }); }
 /* --- Vérification en ligne (serveur Findalyx / Supabase) --- */
 function verifyOnline(code){ return (async function(){
   var url=window.__SUPA_FN__||"", key=window.__SUPA_KEY__||"";
@@ -1667,7 +1678,7 @@ function checkLicence(lic){ return (async function(){
   var on=await verifyOnline(lic);
   if(on.net){
     var d=on.data||{};
-    if(d.ok===true){ _graceSet(lic, d.client, d.expire_le); try{var ls=localStorage.getItem("fx_lastseen"),t=_licToday(); if(!ls||t>ls) localStorage.setItem("fx_lastseen",t);}catch(e){} return {ok:true, customer:d.client, exp:d.expire_le, mode:"online"}; }
+    if(d.ok===true){ _graceSet(lic, d.client, d.expire_le, d.max_societes, d.societes_utilisees); try{var ls=localStorage.getItem("fx_lastseen"),t=_licToday(); if(!ls||t>ls) localStorage.setItem("fx_lastseen",t);}catch(e){} return {ok:true, customer:d.client, exp:d.expire_le, mode:"online", maxSoc:(d.max_societes||0), usedSoc:(d.societes_utilisees||0)}; }
     var raison=d.raison||"invalid";
     if(raison==="expire") return {ok:false, kind:"expired", exp:d.expire_le};
     if(raison==="resilie") return {ok:false, kind:"revoked"};
@@ -1677,7 +1688,7 @@ function checkLicence(lic){ return (async function(){
   var g=_graceGet();
   if(g && g.code===lic){
     if(_licToday()>String(g.exp)) return {ok:false, kind:"expired", exp:g.exp, customer:g.customer};
-    if(_licDaysSince(g.last)<=LIC_GRACE_DAYS && !_licRollback()) return {ok:true, customer:g.customer, exp:g.exp, mode:"grace", last:g.last};
+    if(_licDaysSince(g.last)<=LIC_GRACE_DAYS && !_licRollback()) return {ok:true, customer:g.customer, exp:g.exp, mode:"grace", last:g.last, maxSoc:(g.maxSoc||0), usedSoc:(g.usedSoc||0)};
     return {ok:false, kind:"offline", grace:true};
   }
   return {ok:false, kind:"offline"};
@@ -1696,7 +1707,7 @@ function bootLicence(){
   var lic=""; try{ lic=localStorage.getItem("fx_licence")||""; }catch(e){}
   if(lic) _licSplash();
   checkLicence(lic).then(function(r){
-    if(r.ok){ window.__LICINFO__={customer:r.customer, exp:r.exp, mode:r.mode, last:r.last}; var ap=document.getElementById("app"); if(ap) ap.className=""; init(); }
+    if(r.ok){ window.__LICINFO__={customer:r.customer, exp:r.exp, mode:r.mode, last:r.last, maxSoc:(r.maxSoc||0), usedSoc:(r.usedSoc||0)}; LIC_QUOTA.max=(r.maxSoc||0); LIC_QUOTA.used=(r.usedSoc||0); LIC_QUOTA.known=(r.mode==="online"); var ap=document.getElementById("app"); if(ap) ap.className=""; init(); if(r.mode==="online"){ try{ syncSocietes(); }catch(e){} } }
     else { licenceScreen(r); }
   });
 }
@@ -1781,7 +1792,7 @@ function init(){
  if(!act || !store.analyses[act]) act="demo";
  store.computed={}; activateAnalysis(act); buildShell(); navTo("accueil");
 }
-try{window.FXAPP={navTo:navTo,exportExcel:exportExcel,exportPDF:exportPDF,exportPDFComplete:exportPDFComplete,_c:{get:getComment,set:setComment,ex:function(y){store.settings.exN=y;},ent:function(e){store.settings.entite=e;}},load:function(N,N1,ent){ forkIfDemo(); store.data={N:N,N1:N1}; if(ent!=null) store.settings.entite=ent; recompute(); persistActive(); try{buildShell();render();}catch(e){} }};}catch(e){}
+try{window.FXAPP={navTo:navTo,exportExcel:exportExcel,exportPDF:exportPDF,exportPDFComplete:exportPDFComplete,_c:{get:getComment,set:setComment,ex:function(y){store.settings.exN=y;},ent:function(e){store.settings.entite=e;}},load:function(N,N1,ent){ if(!forkIfDemo()) return; store.data={N:N,N1:N1}; if(ent!=null) store.settings.entite=ent; recompute(); persistActive(); try{buildShell();render();}catch(e){} }};}catch(e){}
 if(document.readyState!=="loading") bootLicence(); else document.addEventListener("DOMContentLoaded",bootLicence);
 })();
 </script><script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script></body></html>
