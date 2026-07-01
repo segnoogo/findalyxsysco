@@ -975,11 +975,12 @@ function prevOutHTML(){
  function r2(lab,v,st){ return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(v)+'</td></tr>'; }
  var cr='<div class="card"><div class="ct">1 · Compte de résultat prévisionnel</div><table class="stmt"><thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
    r3("Chiffre d’affaires",R.CA,R.CA1)+r3("Résultat d’exploitation",R.RE,R.RE1)+r3("Résultat financier",R.RF,R.RF1)+r3("Résultat avant impôt",R.RAO,R.RAO1,true)+r3("Impôt sur le résultat",R.IS,R.IS1)+r3("Résultat net",R.RN,R.RN1,true)+'</tbody></table></div>';
- var bil='<div class="card"><div class="ct">2 · Bilan prévisionnel synthétique '+esc(xp)+'</div><table class="stmt"><tbody>'+
-   r2("Capitaux propres",R.CP1)+r2("Dettes financières",R.DD1)+r2("Autres ressources stables",R.AR)+r2("Ressources stables",R.RS1,true)+
-   r2("− Actif immobilisé net",R.AZ1)+r2("= Fonds de roulement (FR)",R.FR1,true)+r2("− Besoin en fonds de roulement (BFR)",R.BFR1)+r2("= Trésorerie nette",R.TN1,true)+
-   '</tbody></table><div class="foot-note">Bilan condensé (grandes masses). La trésorerie nette est le solde du fonds de roulement et du BFR — le bilan est équilibré par construction.</div></div>';
- var tft='<div class="card"><div class="ct">3 · Flux de trésorerie prévisionnel '+esc(xp)+'</div><table class="stmt"><tbody>'+
+ var RS0=R.CP+R.DD+R.AR, FR0=RS0-R.AZ;
+ var bil='<div class="card"><div class="ct">2 · Bilan prévisionnel synthétique</div><table class="stmt"><thead><tr><th>Grandes masses</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+   r3("Capitaux propres",R.CP,R.CP1)+r3("Dettes financières",R.DD,R.DD1)+r3("Autres ressources stables",R.AR,R.AR)+r3("Ressources stables",RS0,R.RS1,true)+
+   r3("− Actif immobilisé net",R.AZ,R.AZ1)+r3("= Fonds de roulement (FR)",FR0,R.FR1,true)+r3("− Besoin en fonds de roulement (BFR)",R.BFR,R.BFR1)+r3("= Trésorerie nette",R.TN,R.TN1,true)+
+   '</tbody></table><div class="foot-note">Bilan condensé (grandes masses), exercice '+esc(exN)+' réel vs '+esc(xp)+' projeté. La trésorerie nette est le solde du fonds de roulement et du BFR — le bilan est équilibré par construction.</div></div>';
+ var tft='<div class="card"><div class="ct">3 · Flux de trésorerie prévisionnel</div><table class="stmt"><thead><tr><th>Poste</th><th class="num">Exercice '+esc(xp)+' (projeté)</th></tr></thead><tbody>'+
    r2("Trésorerie nette au 31/12/"+esc(exN),R.TN)+
    r2("Capacité d’autofinancement (CAFG)",R.CAFG1)+r2("− Variation du besoin en fonds de roulement",-R.dBFR)+r2("= Flux de trésorerie opérationnels",R.fluxOp,true)+
    r2("Flux d’investissement (acquisitions)",R.fluxInv)+r2("Flux de financement (emprunts, capital, dividendes)",R.fluxFin)+r2("= Variation de trésorerie",R.dTN,true)+
