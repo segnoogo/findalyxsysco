@@ -1,8 +1,8 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Findalyx SYSCO — États financiers SYSCOHADA</title><script>try{document.documentElement.setAttribute('data-theme',(localStorage.getItem('fx_theme')==='dark')?'dark':'light')}catch(e){}</script><style>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Findalyx SYSCO — États financiers SYSCOHADA</title><style>
 *{box-sizing:border-box}
 :root{--navy:#172554;--blue:#224289;--orange:#FA6706;--peach:#FCEFDD;--lblue:#E9EFF7;--lgrey:#F5F5F5;--border:#E5E7EB;--green:#16904E;--red:#C0392B;--ink:#1f2937;--muted:#6b7280}
 html,body{margin:0;padding:0}
-body{font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"SF Pro Text",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--lgrey);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--lgrey);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 #app{display:flex;min-height:100vh}
 .side{width:236px;flex:none;background:var(--navy);color:#fff;display:flex;flex-direction:column;padding:16px 12px;position:sticky;top:0;height:100vh;align-self:flex-start;overflow-y:auto}
 .logo{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 8px 14px}
@@ -252,41 +252,7 @@ body{font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,
 .eq-ok{color:var(--green);font-weight:600}
 .eq-bad{color:var(--red);font-weight:600}
 .muted2{color:var(--muted)}
-/* --- Look premium : badges variation, bouton icone, toasts --- */
-.kpi .d{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:7px;padding:2px 9px;border-radius:20px;background:#eef1f5;color:var(--muted);line-height:1.6}
-.kpi .d.up{background:#e7f4ee;color:#0f6b3c}
-.kpi .d.down{background:#fdeceb;color:#a3271b}
-.kpi .d.up::before{content:"▲";font-size:8px}
-.kpi .d.down::before{content:"▼";font-size:8px}
-.btn.ico{padding:8px 10px;font-size:15px;line-height:1}
-.fx-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--navy);color:#fff;padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:500;box-shadow:0 12px 34px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:6000;max-width:80vw}
-.fx-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.fx-toast.ok{background:#16904E}.fx-toast.err{background:#C0392B}
-/* --- Mode sombre --- */
-html[data-theme="dark"]{--lgrey:#0e1524;--lblue:#18233d;--peach:#2b2233;--border:#2b3652;--muted:#9aa6bd;--ink:#e7ecf6}
-html[data-theme="dark"] body{background:#0e1524;color:var(--ink)}
-html[data-theme="dark"] .top,html[data-theme="dark"] .kpi,html[data-theme="dark"] .card,html[data-theme="dark"] .stmt,html[data-theme="dark"] .pdfmenu,html[data-theme="dark"] .sw-menu,html[data-theme="dark"] .sel,html[data-theme="dark"] .btn,html[data-theme="dark"] .drop,html[data-theme="dark"] .soon,html[data-theme="dark"] .ld-modal,html[data-theme="dark"] .ncom,html[data-theme="dark"] .mtext,html[data-theme="dark"] .mnum{background:#151d30;border-color:#2b3652;color:var(--ink)}
-html[data-theme="dark"] .top .name,html[data-theme="dark"] .kpi .v,html[data-theme="dark"] .ct,html[data-theme="dark"] .dh-t,html[data-theme="dark"] .hello,html[data-theme="dark"] .lg b,html[data-theme="dark"] .soon-t,html[data-theme="dark"] .ckl,html[data-theme="dark"] .rc-v{color:#eef2fb}
-html[data-theme="dark"] .stmt td{border-top-color:#243049}
-html[data-theme="dark"] .stmt thead th,html[data-theme="dark"] .stmt tr.grand td{background:#1f2c4a;color:#fff}
-html[data-theme="dark"] .stmt tr.tot td{background:#1a2338;color:#eef2fb}
-html[data-theme="dark"] .stmt tr.sub td{background:#2a2233;color:#f4ddc7}
-html[data-theme="dark"] .stmt tr.h td{background:#18233d;color:#cdd7ea}
-html[data-theme="dark"] .stmt tr.ov td{background:#2a2233}
-html[data-theme="dark"] .stmt tbody tr[data-ref]:hover{background:#1d2a49;box-shadow:inset 3px 0 0 var(--orange)}
-html[data-theme="dark"] .mini td{border-top-color:#243049}
-html[data-theme="dark"] .mini th{background:#18233d;color:#cdd7ea}
-html[data-theme="dark"] .ld-head{background:#151d30;border-bottom-color:#2b3652;color:#eef2fb}
-html[data-theme="dark"] .ld-x{background:#22304f;color:#cdd7ea}
-html[data-theme="dark"] .kpi-i{background:#33405e;color:#cdd7ea}
-html[data-theme="dark"] .btn:hover{background:#1e2a45}
-html[data-theme="dark"] .btn.primary{background:var(--orange);color:#fff;border-color:var(--orange)}
-html[data-theme="dark"] .pdfmenu div{color:#dbe4f5}html[data-theme="dark"] .pdfmenu div:hover{background:#22304f}
-html[data-theme="dark"] .side{background:#0b1220}
-html[data-theme="dark"] .chip.muted{background:#22304f;color:#9aa6bd}
-html[data-theme="dark"] .kv td{border-top-color:#243049}html[data-theme="dark"] .kv td:last-child{color:#eef2fb}
-html[data-theme="dark"] .ck{border-top-color:#243049}
-html[data-theme="dark"] .ribbon.warn{background:#2b2233;color:#f4ddc7}
+
 </style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#172554"><link rel="apple-touch-icon" href="icon-192.png"></head><body><div id="app"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script><script>/* ============================================================
    FINDALYX - Moteur de liasse fiscale SYSCOHADA (Systeme Normal)
    Coeur de calcul : balance -> Bilan + Compte de resultat.
@@ -633,12 +599,6 @@ function recompute(){
 /* ---------- Layout ---------- */
 function licFootHTML(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); if(dd>30) return ""; var cls=dd<0?" lic-foot-exp":" lic-foot-soon"; var txt=dd<0?"Abonnement expiré — à renouveler":("Abonnement : expire dans "+dd+" j<br>("+esc(L.exp)+")"); return '<div class="sfoot-lic'+cls+'">'+txt+'</div>'; }catch(e){ return ""; } }
 function licStatusCard(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); var st=dd<0?["Expiré","exp"]:(dd<=30?["Expire bientôt","soon"]:["Actif","ok"]); var md=L.mode==="online"?'<span class="pill ok">En ligne</span>':(L.mode==="grace"?('Hors-ligne (vérifié le '+esc(L.last||"?")+')'):(L.mode==="owner"?'Clé propriétaire (hors-ligne)':'—')); return '<div class="card"><div class="ct">Abonnement Findalyx</div><table class="kv"><tr><td>Titulaire de la licence</td><td>'+esc(L.customer||"—")+'</td></tr><tr><td>Statut</td><td><span class="pill '+st[1]+'">'+st[0]+'</span></td></tr><tr><td>Vérification</td><td>'+md+'</td></tr><tr><td>Expire le</td><td>'+esc(L.exp)+'</td></tr><tr><td>Jours restants</td><td>'+(dd<0?"—":dd+" jours")+'</td></tr><tr><td>Societes analysees</td><td>'+quotaUsed()+(quotaMax()>0?(" / "+quotaMax()):" (illimite)")+'</td></tr></table><details class="wz-more" style="margin-top:12px"><summary>Renouveler / saisir une nouvelle clé</summary><div style="margin-top:8px"><textarea id="licRenew" class="lic-in" placeholder="Colle ici ta nouvelle clé"></textarea><div id="licRenewErr" class="lic-err"></div><button class="btn primary" id="licRenewBtn">Mettre à jour la licence</button></div></details></div>'; }catch(e){ return ""; } }
-/* ---------- Thème clair / sombre ---------- */
-function currentTheme(){ try{ return localStorage.getItem("fx_theme")==="dark"?"dark":"light"; }catch(e){ return "light"; } }
-function applyTheme(t){ t=t||currentTheme(); try{ document.documentElement.setAttribute("data-theme", t); }catch(e){} try{ if(typeof Chart!=="undefined" && Chart.defaults){ Chart.defaults.color=(t==="dark"?"#aeb9d0":"#666"); } }catch(e){} var b=document.getElementById("btnTheme"); if(b) b.textContent=(t==="dark"?"☀":"🌙"); }
-function toggleTheme(){ var t=currentTheme()==="dark"?"light":"dark"; try{ localStorage.setItem("fx_theme",t); }catch(e){} applyTheme(t); try{ render(); }catch(e){} }
-/* ---------- Toasts ---------- */
-function fxToast(msg,type){ try{ var t=document.getElementById("fxToast"); if(!t){ t=document.createElement("div"); t.id="fxToast"; document.body.appendChild(t); } t.className="fx-toast "+(type||"")+" show"; t.textContent=msg; clearTimeout(window.__fxTT); window.__fxTT=setTimeout(function(){ t.className="fx-toast "+(type||""); },2600); }catch(e){} }
 function buildShell(){
  var nav = NAV.map(function(n){
    if(n.sep) return '<div class="sep"></div>';
@@ -654,7 +614,7 @@ function buildShell(){
    '<header class="top">'+
      '<div class="switcher"><button class="sw-btn" id="swBtn"><span class="sw-ent"><span class="name" id="topEnt"></span><span class="sub" id="topSub"></span></span><span class="sw-ar">\u25be</span></button><div class="sw-menu" id="swMenu"></div></div>'+
      '<div class="right">'+
-       '<span class="chip" id="topEq"></span>'+'<button class="btn ico" id="btnTheme" title="Basculer clair / sombre">🌙</button>'+
+       '<span class="chip" id="topEq"></span>'+
        ''+
        '<select class="sel" id="selUnit"><option value="FCFA">FCFA</option><option value="milliers">Milliers</option><option value="millions">Millions</option></select>'+
        '<button class="btn" id="btnXlsx">Exporter Excel</button>'+'<div class="pdfdd"><button class="btn primary" id="btnPrint">Exporter PDF ▾</button><div class="pdfmenu" id="pdfMenu"><div data-pdf="page">Page actuelle</div><div data-pdf="full">États financiers complets</div></div></div>'+
@@ -667,7 +627,7 @@ function buildShell(){
  document.getElementById("btnPrint").onclick=function(e){ e.stopPropagation(); var m=document.getElementById("pdfMenu"); if(m) m.classList.toggle("open"); };
  document.querySelectorAll("#pdfMenu [data-pdf]").forEach(function(it){ it.onclick=function(){ var m=document.getElementById("pdfMenu"); if(m) m.classList.remove("open"); if(it.getAttribute("data-pdf")==="full") exportPDFComplete(); else exportPDF(); }; });
  document.addEventListener("click",function(){ var m=document.getElementById("pdfMenu"); if(m) m.classList.remove("open"); var sm=document.getElementById("swMenu"); if(sm) sm.classList.remove("open"); });
- document.getElementById("btnXlsx").onclick=exportExcel; var _bt=document.getElementById("btnTheme"); if(_bt) _bt.onclick=toggleTheme; applyTheme(); wireSwitcher();
+ document.getElementById("btnXlsx").onclick=exportExcel; wireSwitcher();
 }
 function navTo(id){ store.route=id; document.querySelectorAll(".nav .item").forEach(function(a){ a.classList.toggle("active", a.getAttribute("data-id")===id); }); render(); }
 
@@ -797,6 +757,77 @@ function viewControles(){
  else tc='<div class="card ok-card">Aucun compte ambigu : tous les comptes sont rattachés à une ligne précise des états.</div>';
  return docHead("Contrôles & anomalies","")+banner+list+tc;
 }
+/* ---------- Note de synthèse (commentaire de gestion) ---------- */
+function fxSynth(){
+ var CA=cN("XB"),CA1=cN1("XB"),RN=cN("XI"),RN1=cN1("XI");
+ var CP=vN("CP"),BZ=vN("BZ"),DZ=vN("DZ")||1;
+ var fr=vN("DF")-vN("AZ"),bfr=vN("BK")-vN("DP"),tn=vN("BU")-vN("DT");
+ var auto=CP/DZ*100, liq=(vN("BK")+vN("BU"))/((vN("DP")+vN("DT"))||1);
+ var dettes=vN("DD")+vN("DP")+vN("DT"), solv=BZ/(dettes||1), couv=vN("DF")/(vN("AZ")||1)*100;
+ var mn=CA?RN/CA*100:0, mn1=CA1?RN1/CA1*100:0;
+ var caVar=CA1?(CA-CA1)/Math.abs(CA1)*100:null, rnVar=RN1?(RN-RN1)/Math.abs(RN1)*100:null;
+ return {CA:CA,CA1:CA1,caVar:caVar,RN:RN,RN1:RN1,rnVar:rnVar,mn:mn,mn1:mn1,CP:CP,BZ:BZ,auto:auto,fr:fr,bfr:bfr,tn:tn,liq:liq,solv:solv,couv:couv};
+}
+function _sP(x){ return (Math.round(x*10)/10).toLocaleString("fr-FR")+" %"; }
+function _sR(x){ return (Math.round(x*100)/100).toLocaleString("fr-FR"); }
+function fxSynthParas(){
+ if(!store.computed.N) return [];
+ var v=fxSynth(), s=store.settings, ent=s.entite||"La société", u=uniteLabel();
+ function sens(d){ return d==null?"stable":(d>=0?("en hausse de "+_sP(Math.abs(d))):("en baisse de "+_sP(Math.abs(d)))); }
+ var p=[];
+ p.push("Au titre de l’exercice clos le "+s.dateN+", "+ent+" a réalisé un chiffre d’affaires de "+fmt(v.CA)+" "+u+(v.caVar==null?"." : (", "+sens(v.caVar)+" par rapport à l’exercice précédent ("+fmt(v.CA1)+" "+u+").")));
+ var qual=v.RN>0?"bénéficiaire":(v.RN<0?"déficitaire":"à l’équilibre");
+ p.push("L’exercice se solde par un résultat net "+qual+" de "+fmt(v.RN)+" "+u+", soit une marge nette de "+_sP(v.mn)+(v.rnVar==null?"." : (", le résultat étant "+sens(v.rnVar)+" sur un an.")));
+ p.push("Les capitaux propres s’élèvent à "+fmt(v.CP)+" "+u+", représentant une autonomie financière de "+_sP(v.auto)+" du total du bilan. Le fonds de roulement ressort à "+fmt(v.fr)+" et le besoin en fonds de roulement à "+fmt(v.bfr)+", d’où une trésorerie nette "+(v.tn>=0?"positive":"négative")+" de "+fmt(v.tn)+" "+u+".");
+ p.push("La liquidité générale s’établit à "+_sR(v.liq)+" (les actifs à court terme couvrent "+_sR(v.liq)+" fois les dettes à court terme) et la solvabilité générale à "+_sR(v.solv)+".");
+ var al=[];
+ if(v.CP<0) al.push("capitaux propres négatifs");
+ if(v.tn<0) al.push("trésorerie nette négative");
+ if(v.RN<0) al.push("résultat déficitaire");
+ if(v.liq<1) al.push("liquidité générale inférieure à 1");
+ if(v.auto<20) al.push("autonomie financière faible (inférieure à 20 %)");
+ p.push(al.length?("Points de vigilance : "+al.join(", ")+"."):"Les principaux indicateurs de structure et de rentabilité ne font pas apparaître de point de vigilance majeur à la clôture.");
+ return p;
+}
+function fxSynthIndics(){
+ var v=fxSynth();
+ return [
+  ["Chiffre d’affaires",fmt(v.CA),fmt(v.CA1)],
+  ["Résultat net",fmt(v.RN),fmt(v.RN1)],
+  ["Marge nette",_sP(v.mn),_sP(v.mn1)],
+  ["Capitaux propres",fmt(v.CP),fmt(vN1("CP"))],
+  ["Autonomie financière",_sP(v.auto),_sP(vN1("CP")/(vN1("DZ")||1)*100)],
+  ["Fonds de roulement",fmt(v.fr),fmt(vN1("DF")-vN1("AZ"))],
+  ["Besoin en fonds de roulement",fmt(v.bfr),fmt(vN1("BK")-vN1("DP"))],
+  ["Trésorerie nette",fmt(v.tn),fmt(vN1("BU")-vN1("DT"))],
+  ["Liquidité générale",_sR(v.liq),_sR((vN1("BK")+vN1("BU"))/((vN1("DP")+vN1("DT"))||1))],
+  ["Solvabilité générale",_sR(v.solv),_sR(vN1("BZ")/((vN1("DD")+vN1("DP")+vN1("DT"))||1))]
+ ];
+}
+function syntheseCardHTML(){
+ if(!store.computed.N) return "";
+ var paras=fxSynthParas().map(function(t){ return '<p style="font-size:13.5px;line-height:1.65;margin:0 0 10px">'+esc(t)+'</p>'; }).join("");
+ return '<div class="card"><div class="ct">Note de synthèse — commentaire de gestion</div>'+paras+'<div class="foot-note" style="margin:2px 0 12px">Générée automatiquement à partir des états ; à relire et ajuster avant diffusion. Ne constitue pas un conseil financier.</div><button class="btn primary" id="btnSynthWord">Télécharger la note en Word</button></div>';
+}
+function exportSyntheseWord(){
+ if(!store.computed.N){ alert("Importe d’abord une balance."); return; }
+ var s=store.settings, ent=esc(s.entite||"Société");
+ var paras=fxSynthParas().map(function(t){ return '<p style="margin:0 0 10px;line-height:1.5">'+esc(t)+'</p>'; }).join("");
+ var rows=fxSynthIndics().map(function(r){ return '<tr><td>'+esc(r[0])+'</td><td style="text-align:right">'+esc(r[1])+'</td><td style="text-align:right">'+esc(r[2])+'</td></tr>'; }).join("");
+ var logo=window.__LOGO__?'<img src="'+window.__LOGO__+'" style="height:34px"/>':'';
+ var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Note de synthèse</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#1f2937;font-size:11pt">'+
+  '<table style="width:100%"><tr><td>'+logo+'</td><td style="text-align:right;font-size:9pt;color:#6b7280">Note de synthèse<br/>Exercice clos le '+esc(s.dateN)+'</td></tr></table>'+
+  '<h1 style="color:#172554;font-size:18pt;margin:14px 0 2px">'+ent+'</h1>'+
+  '<div style="color:#6b7280;font-size:10pt;margin-bottom:14px">Commentaire de gestion — Système Normal SYSCOHADA · '+esc(s.pays||"")+' · Montants en '+esc(uniteLabel())+'</div>'+
+  '<h2 style="color:#172554;font-size:13pt;border-bottom:2px solid #172554;padding-bottom:4px">Analyse de la situation</h2>'+paras+
+  '<h2 style="color:#172554;font-size:13pt;border-bottom:2px solid #172554;padding-bottom:4px;margin-top:16px">Indicateurs clés</h2>'+
+  '<table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:10pt"><tr style="background:#172554;color:#ffffff"><th style="text-align:left">Indicateur</th><th>Exercice '+esc(s.exN)+'</th><th>Exercice '+esc(s.exN1)+'</th></tr>'+rows+'</table>'+
+  '<p style="font-size:8pt;color:#9aa6bd;margin-top:16px">Document généré automatiquement par Findalyx SYSCO à partir des états financiers. À relire et valider avant diffusion. Ne constitue pas un conseil financier.</p>'+
+  '</body></html>';
+ var safe=(String(s.entite||"societe").replace(/[^0-9A-Za-zÀ-ÿ]+/g,"_").replace(/^_+|_+$/g,"")||"societe").slice(0,40);
+ dlBlob(new Blob(["﻿"+html],{type:"application/msword"}), "Note_de_synthese_"+safe+"_"+s.exN+".doc");
+}
+
 function viewDashboard(){
  var fr=vN("DF")-vN("AZ"), bfr=vN("BK")-vN("DP"), tn=vN("BU")-vN("DT");
  var dz=vN("DZ")||1, auto=vN("CP")/dz*100;
@@ -835,7 +866,7 @@ function viewDashboard(){
   '</div>'+
   '<div class="grid2"><div class="card"><div class="ct">Structure du passif</div><div class="chartbox"><canvas id="chPassif"></canvas></div></div><div class="card"><div class="ct">Soldes intermédiaires de gestion</div><div class="chartbox"><canvas id="chSIG"></canvas></div></div></div>'+
   '<div class="grid2"><div class="card"><div class="ct">Répartition des charges</div><div class="chartbox"><canvas id="chCharges"></canvas></div></div><div class="card"><div class="ct">Produits, charges et résultat</div><div class="chartbox"><canvas id="chPC"></canvas></div></div></div>'+
-  lecture;
+  lecture+syntheseCardHTML();
 }
 function slotCard(slot,role){
  var rows=store.data[slot]; var info= rows? '<b>'+rows.length+' comptes</b> chargés' : 'Aucun fichier chargé';
@@ -1117,7 +1148,7 @@ function exportLineDetailExcel(){
 function wireTables(){ if(window.__fxTW) return; window.__fxTW=true;
  document.addEventListener("click", function(e){
    if(!e.target||!e.target.closest) return;
-   if(e.target.closest("#ldOverlay")) return;
+   if(e.target.closest && e.target.closest("#btnSynthWord")){ exportSyntheseWord(); return; } if(e.target.closest("#ldOverlay")) return;
    var tr=e.target.closest("tr[data-ref]"); if(!tr) return;
    showLineDetail(tr.getAttribute("data-ref"), tr.getAttribute("data-label")||"");
   
@@ -1468,7 +1499,7 @@ function wireDashboard(){
  mkChart("chPC",{type:"bar",data:{labels:["Produits","Charges","Résultat net"],datasets:[{data:[kn(dashTotProduits()),kn(dashTotCharges()),kn(cN("XI"))],backgroundColor:[FXPAL[3],FXPAL[1],FXPAL[0]]}]},options:barOpts(false,false)});
 }
 function nUx(n){ return Math.round((Number(n)||0)/uf()); }
-function dlBlob(blob,name){ var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); try{ fxToast("Téléchargement : "+name,"ok"); }catch(e){} setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },2000); }
+function dlBlob(blob,name){ var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },2000); }
 function exportExcel(){
  if(typeof ExcelJS==="undefined"){ alert("Export Excel indisponible hors-ligne (connexion requise au premier chargement)."); return; }
  if(!store.computed.N){ alert("Importe d’abord une balance."); return; }
