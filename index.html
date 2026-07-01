@@ -85,6 +85,9 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .ld-ref{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin-right:7px}
 .ld-x{border:0;background:#f1f3f7;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;color:#555;flex:none}
 .ld-x:hover{background:#e6e9ef}
+.ld-actions{display:flex;align-items:center;gap:8px;flex:none}
+.ld-xls{border:0;background:#1d7a46;color:#fff;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;cursor:pointer;flex:none}
+.ld-xls:hover{background:#17683b}
 .ld-b{padding:12px 18px 18px}
 .ld-empty{color:var(--muted);font-size:13px;padding:10px 2px}
 .ld-hint{font-size:11.5px;color:var(--muted);margin:0 0 10px}
@@ -1039,16 +1042,16 @@ function showLineDetail(ref, label){
  var ov=store.settings.overrides||{};
  var accs=accountsForLine(store.data.N, ov, ref);
  var n1={}; (store.data.N1||[]).forEach(function(r){ n1[String(r.a)]=Number(r.s)||0; });
- var body, tot=0, tot1=0;
+ var body, tot=0, tot1=0, xlsBtn='';
  if(!accs.length){ window.__LDCUR__=null; body='<div class="ld-empty">Cette ligne est un <b>solde calculé</b> (sous-total ou résultat de l’exercice) — elle n’est pas rattachée directement à des comptes.</div>'; }
  else {
    var _rows=[]; var trs=accs.map(function(x){ var s1=n1[x.a]; tot+=x.s; if(s1!=null) tot1+=s1; _rows.push({a:x.a,l:x.l||"",s:x.s,s1:(s1!=null?s1:null)}); return '<tr><td class="rf">'+esc(x.a)+'</td><td>'+esc(x.l)+'</td><td class="num">'+fmt(x.s)+'</td><td class="num">'+(s1!=null?fmt(s1):"–")+'</td></tr>'; }).join("");
    body='<div class="ld-hint">'+accs.length+' compte'+(accs.length>1?'s':'')+' composent cette ligne. Cliquez ailleurs ou ✕ pour fermer.</div>'+
      '<table class="mini"><tr><th>Compte</th><th>Libellé</th><th class="num">'+esc(store.settings.exN)+'</th><th class="num">'+esc(store.settings.exN1)+'</th></tr>'+trs+
-     '<tr class="tot"><td></td><td><b>Total</b></td><td class="num"><b>'+fmt(tot)+'</b></td><td class="num">'+fmt(tot1)+'</td></tr></table>'+'<div style="margin-top:14px;text-align:right"><button class="btn primary" id="ldXls">Télécharger ce détail en Excel</button></div>'; window.__LDCUR__={ref:ref,label:label||"",rows:_rows,tot:tot,tot1:tot1,exN:store.settings.exN,exN1:store.settings.exN1,entite:store.settings.entite};
+     '<tr class="tot"><td></td><td><b>Total</b></td><td class="num"><b>'+fmt(tot)+'</b></td><td class="num">'+fmt(tot1)+'</td></tr></table>'; window.__LDCUR__={ref:ref,label:label||"",rows:_rows,tot:tot,tot1:tot1,exN:store.settings.exN,exN1:store.settings.exN1,entite:store.settings.entite}; xlsBtn='<button class="ld-xls" id="ldXls" title="Télécharger ce détail en Excel">Excel</button>';
  }
  var o=document.getElementById("ldOverlay"); if(!o){ o=document.createElement("div"); o.id="ldOverlay"; o.className="ld-overlay"; document.body.appendChild(o); }
- o.innerHTML='<div class="ld-modal"><div class="ld-head"><div><span class="ld-ref">'+esc(ref)+'</span>'+esc(label||"")+'</div><button class="ld-x" id="ldX" aria-label="Fermer">✕</button></div><div class="ld-b">'+body+'</div></div>';
+ o.innerHTML='<div class="ld-modal"><div class="ld-head"><div><span class="ld-ref">'+esc(ref)+'</span>'+esc(label||"")+'</div><div class="ld-actions">'+xlsBtn+'<button class="ld-x" id="ldX" aria-label="Fermer">✕</button></div></div><div class="ld-b">'+body+'</div></div>';
  o.classList.add("open"); var _xb=document.getElementById("ldXls"); if(_xb) _xb.onclick=function(ev){ ev.stopPropagation(); exportLineDetailExcel(); };
  o.onclick=function(e){ if(e.target===o||e.target.id==="ldX"||(e.target.closest&&e.target.closest("#ldX"))) o.classList.remove("open"); };
 }
