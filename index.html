@@ -673,8 +673,8 @@ function render(){
 }
 
 /* ---------- White-label : logo du cabinet ---------- */
-function cabLogo(){ try{ return localStorage.getItem("fx_cablogo")||""; }catch(e){ return ""; } }
-function removeCabLogo(){ try{ localStorage.removeItem("fx_cablogo"); }catch(e){} render(); }
+function cabLogo(){ try{ return (store.settings&&store.settings.logo)||""; }catch(e){ return ""; } }
+function removeCabLogo(){ if(store.settings) store.settings.logo=""; try{ persistActive(); }catch(e){} render(); }
 function onCabLogoFile(file){
  if(!file) return;
  if(!/^image\//.test(file.type||"")){ alert("Choisis un fichier image (PNG, JPG…)."); return; }
@@ -687,7 +687,7 @@ function onCabLogoFile(file){
    var c=document.createElement("canvas"); c.width=w; c.height=h;
    try{ c.getContext("2d").drawImage(img,0,0,w,h); }catch(e){}
    var url; try{ url=c.toDataURL("image/png"); }catch(e){ url=String(rd.result||""); }
-   try{ localStorage.setItem("fx_cablogo", url); }catch(e){ alert("Logo trop lourd pour être enregistré. Choisis une image plus légère."); return; }
+   store.settings.logo=url; try{ persistActive(); }catch(e){ store.settings.logo=""; alert("Logo trop lourd pour être enregistré. Choisis une image plus légère."); return; }
    render();
   };
   img.onerror=function(){ alert("Fichier image non valide."); };
@@ -697,8 +697,8 @@ function onCabLogoFile(file){
 }
 function wlCard(){
  var has=cabLogo();
- return '<div class="card"><div class="ct">Personnalisation — logo du cabinet (white-label)</div>'+
-  '<div class="subtle" style="margin:0 0 10px">Ce logo apparaît en en-tête de vos états et sur la note de synthèse (à l’écran et dans les exports PDF/Word). Il est enregistré sur cet appareil, pour toutes vos analyses.</div>'+
+ return '<div class="card"><div class="ct">Personnalisation — logo des états (propre à cette société)</div>'+
+  '<div class="subtle" style="margin:0 0 10px">Ce logo apparaît en en-tête des états de <b>cette société</b> (à l’écran et dans les exports PDF/Word). Chaque société a son propre logo.</div>'+
   '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">'+
    '<div style="min-width:150px;min-height:54px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:8px;background:#fff">'+(has?'<img src="'+has+'" style="max-height:44px;max-width:200px"/>':'<span class="subtle" style="margin:0">Aucun logo</span>')+'</div>'+
    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
@@ -1851,9 +1851,9 @@ function wireEmpty(){ document.querySelectorAll("[data-goempty]").forEach(functi
 function loadAnalyses(){ try{ var x=localStorage.getItem("fx_analyses"); return x?JSON.parse(x):{}; }catch(e){ return {}; } }
 function saveAnalyses(){ try{ var out={}; Object.keys(store.analyses).forEach(function(id){ if(id!=="demo") out[id]=store.analyses[id]; }); localStorage.setItem("fx_analyses",JSON.stringify(out)); }catch(e){} }
 function buildDemoAnalysis(){ return { id:"demo", name:"SOCIÉTÉ MODÈLE SARL", pays:"Sénégal", exN:"2024", exN1:"2023", dateN:"31/12/2024", dateN1:"31/12/2023", unite:"FCFA", ident:{sigle:"SOMOD",ninea:"SN-DEMO-0001",adresse:"Zone industrielle, Lot 12",ville:"Dakar",forme:"SARL",regime:"Réel normal",rccm:"SN-DKR-2020-B-1234",activite:"Commerce de distribution",dirNom:"Awa Ndiaye",dirQual:"Gérante",expert:"",centre:"CGE Dakar"}, manual:{}, comments:{}, overrides:{}, fiscal:{isRate:null,lines:{}}, dataN:(window.__EMBED__&&window.__EMBED__["2024"])||null, dataN1:(window.__EMBED__&&window.__EMBED__["2023"])||null, created:0, demo:true }; }
-function snapshotActive(){ var s=store.settings; var prev=store.analyses[store.activeId]||{}; return { id:store.activeId, name:s.entite, pays:s.pays, exN:s.exN, exN1:s.exN1, dateN:s.dateN, dateN1:s.dateN1, unite:s.unite, ident:s.ident||{}, manual:s.manual||{}, comments:s.noteComments||{}, overrides:s.overrides||{}, fiscal:s.fiscal||{isRate:null,lines:{}}, dataN:store.data.N||null, dataN1:store.data.N1||null, histData:(store.data.hist||{}), created:prev.created||Date.now() }; }
+function snapshotActive(){ var s=store.settings; var prev=store.analyses[store.activeId]||{}; return { id:store.activeId, name:s.entite, pays:s.pays, exN:s.exN, exN1:s.exN1, dateN:s.dateN, dateN1:s.dateN1, unite:s.unite, ident:s.ident||{}, logo:s.logo||"", manual:s.manual||{}, comments:s.noteComments||{}, overrides:s.overrides||{}, fiscal:s.fiscal||{isRate:null,lines:{}}, dataN:store.data.N||null, dataN1:store.data.N1||null, histData:(store.data.hist||{}), created:prev.created||Date.now() }; }
 function persistActive(){ if(store.activeId && store.activeId!=="demo"){ store.analyses[store.activeId]=snapshotActive(); saveAnalyses(); } }
-function activateAnalysis(id){ var a=store.analyses[id]; if(!a) return; store.activeId=id; store.settings={ entite:a.name||"", pays:a.pays||"Sénégal", exN:a.exN||"2024", exN1:a.exN1||"2023", dateN:a.dateN||("31/12/"+(a.exN||"2024")), dateN1:a.dateN1||("31/12/"+(a.exN1||"2023")), unite:a.unite||"FCFA", ident:a.ident||{}, manual:a.manual||{}, noteComments:a.comments||{}, overrides:a.overrides||{}, fiscal:a.fiscal||{isRate:null,lines:{}} }; store.data={ N:a.dataN||null, N1:a.dataN1||null, hist:a.histData||{} }; store.computed={}; recompute(); try{localStorage.setItem("fx_active",id);}catch(e){} }
+function activateAnalysis(id){ var a=store.analyses[id]; if(!a) return; store.activeId=id; store.settings={ entite:a.name||"", pays:a.pays||"Sénégal", exN:a.exN||"2024", exN1:a.exN1||"2023", dateN:a.dateN||("31/12/"+(a.exN||"2024")), dateN1:a.dateN1||("31/12/"+(a.exN1||"2023")), unite:a.unite||"FCFA", ident:a.ident||{}, logo:a.logo||"", manual:a.manual||{}, noteComments:a.comments||{}, overrides:a.overrides||{}, fiscal:a.fiscal||{isRate:null,lines:{}} }; store.data={ N:a.dataN||null, N1:a.dataN1||null, hist:a.histData||{} }; store.computed={}; recompute(); try{localStorage.setItem("fx_active",id);}catch(e){} }
 function analysesList(){ return Object.keys(store.analyses).map(function(id){ return store.analyses[id]; }).sort(function(a,b){ if(a.id==="demo")return 1; if(b.id==="demo")return -1; return (b.created||0)-(a.created||0); }); }
 function switchTo(id){ if(id===store.activeId){ return; } persistActive(); activateAnalysis(id); buildShell(); navTo("accueil"); }
 function deleteAnalysis(id){ if(id==="demo")return; delete store.analyses[id]; saveAnalyses(); try{ societeApi("remove",{societe_id:id}); }catch(e){} if(store.activeId===id){ activateAnalysis("demo"); } buildShell(); navTo("accueil"); }
