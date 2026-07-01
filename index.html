@@ -572,10 +572,11 @@ var NAV = [
  {id:"fiscal",ic:"receipt",t:"Tableaux fiscaux"},
  {sep:1},
  {id:"dashboard",ic:"chart",t:"Dashboard"},
+ {id:"tendances",ic:"flow",t:"Tendances"},
  {sep:1},
  {id:"parametres",ic:"gear",t:"Paramètres"}
 ];
-var TITLES = {accueil:"Accueil",import:"Import de la balance",controles:"Contrôles & anomalies",bilan:"Bilan",resultat:"Compte de résultat",tft:"Tableau des flux de trésorerie",notes:"Notes annexes",fiscal:"Tableaux fiscaux",dashboard:"Analyse financière",parametres:"Paramètres"};
+var TITLES = {accueil:"Accueil",import:"Import de la balance",controles:"Contrôles & anomalies",bilan:"Bilan",resultat:"Compte de résultat",tft:"Tableau des flux de trésorerie",notes:"Notes annexes",fiscal:"Tableaux fiscaux",dashboard:"Analyse financière",tendances:"Tendances pluriannuelles",parametres:"Paramètres"};
 
 /* ---------- Helpers ---------- */
 function uf(){ return store.settings.unite==="millions"?1e6: store.settings.unite==="milliers"?1e3:1; }
@@ -663,6 +664,7 @@ function render(){
  else if(id==="fiscal"){ v.innerHTML=viewFiscal(); wireFiscal(); }
  else if(id==="dashboard"){ v.innerHTML=viewDashboard(); wireDashboard(); }
  else if(id==="parametres"){ v.innerHTML=viewParametres(); wireParam(); }
+ else if(id==="tendances"){ v.innerHTML=viewTendances(); wireTendances(); }
  else v.innerHTML=viewSoon(id);
  v.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ navTo(b.getAttribute("data-go")); }; });
  wireTables();
@@ -868,6 +870,65 @@ function exportSyntheseWord(){
   '</body></html>';
  var safe=(String(s.entite||"societe").replace(/[^0-9A-Za-zÀ-ÿ]+/g,"_").replace(/^_+|_+$/g,"")||"societe").slice(0,40);
  dlBlob(new Blob(["﻿"+html],{type:"application/msword"}), "Note_de_synthese_"+safe+"_"+s.exN+".doc");
+}
+
+/* ---------- Tendances pluriannuelles (multi-années) ---------- */
+function yearIndics(c){
+ var b=(c&&c.bil)||{}, r=(c&&c.cr)||{};
+ var CA=r.XB||0, RN=r.XI||0;
+ return {CA:CA, VA:r.XC||0, EBE:r.XD||0, RE:r.XE||0, RN:RN, CP:b.CP||0, BZ:b.BZ||0, TN:(b.BU||0)-(b.DT||0), MN:(CA?RN/CA*100:0)};
+}
+function histSeries(){
+ var out=[], ov=store.settings.overrides||{}, hist=store.data.hist||{}, xN=String(store.settings.exN), xN1=String(store.settings.exN1);
+ Object.keys(hist).forEach(function(y){ if(String(y)===xN||String(y)===xN1) return; try{ out.push({year:String(y), comp:E.computeYear(hist[y], ov)}); }catch(e){} });
+ if(store.computed.N1) out.push({year:xN1, comp:store.computed.N1});
+ if(store.computed.N) out.push({year:xN, comp:store.computed.N});
+ out.sort(function(a,b){ return (parseInt(a.year,10)||0)-(parseInt(b.year,10)||0); });
+ return out.map(function(o){ return {year:o.year, ind:yearIndics(o.comp)}; });
+}
+function tendAddCard(){
+ var hist=store.data.hist||{}, ys=Object.keys(hist).sort();
+ var list = ys.length? '<div style="margin:6px 0 12px;display:flex;flex-wrap:wrap;gap:8px">'+ys.map(function(y){ return '<span class="pill ok" style="display:inline-flex;align-items:center;gap:6px">'+esc(y)+' <span data-delyear="'+esc(y)+'" style="cursor:pointer;font-weight:700" title="Retirer cet exercice">✕</span></span>'; }).join("")+'</div>' : '';
+ var cur=parseInt(store.settings.exN1,10)||2023, opts='';
+ for(var y=cur-1;y>=cur-8;y--){ if(!hist[String(y)]) opts+='<option>'+y+'</option>'; }
+ return '<div class="card"><div class="ct">Ajouter un exercice antérieur</div>'+
+   '<div class="subtle" style="margin:0 0 10px">Importe la <b>balance</b> d’un exercice plus ancien (N‑2, N‑3…) pour enrichir les tendances. Seuls les indicateurs de synthèse sont calculés (pas d’états complets).</div>'+
+   list+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+     '<select class="sel" id="tendYear" style="width:120px">'+opts+'</select>'+
+     '<label class="btn sm primary" style="color:#fff">Importer la balance<input type="file" id="tendFile" accept=".xlsx,.xls,.csv" hidden></label>'+
+   '</div></div>';
+}
+function viewTendances(){
+ var S=histSeries(), add=tendAddCard();
+ if(S.length<2){
+   return docHead("Tendances pluriannuelles",store.settings.dateN)+
+     '<div class="ribbon warn">Ajoute au moins un exercice antérieur (N‑2, N‑3…) ci‑dessous pour visualiser les tendances. Les exercices N et N‑1 sont déjà pris en compte automatiquement.</div>'+add;
+ }
+ var years=S.map(function(x){return x.year;});
+ var rowsDef=[["Chiffre d’affaires","CA","amt"],["Valeur ajoutée","VA","amt"],["Excédent brut d’exploitation","EBE","amt"],["Résultat d’exploitation","RE","amt"],["Résultat net","RN","amt"],["Capitaux propres","CP","amt"],["Total du bilan","BZ","amt"],["Trésorerie nette","TN","amt"],["Marge nette","MN","pct"]];
+ var head='<tr><th>Indicateur</th>'+years.map(function(y){return '<th class="num">'+esc(y)+'</th>';}).join("")+'</tr>';
+ var body=rowsDef.map(function(d){ return '<tr><td>'+d[0]+'</td>'+S.map(function(x){ var v=x.ind[d[1]]; return '<td class="num">'+(d[2]==="pct"?((Math.round(v*10)/10).toLocaleString("fr-FR")+" %"):fmt(v))+'</td>'; }).join("")+'</tr>'; }).join("");
+ var table='<table class="stmt"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+ return docHead("Tendances pluriannuelles",store.settings.dateN)+
+   '<div class="subtle">Évolution des principaux indicateurs sur '+years.length+' exercices ('+esc(years[0])+' → '+esc(years[years.length-1])+'). Montants en '+uniteLabel()+'.</div>'+
+   '<div class="grid2"><div class="card"><div class="ct">Chiffre d’affaires & Résultat net</div><div class="chartbox"><canvas id="chTrendCA"></canvas></div></div>'+
+   '<div class="card"><div class="ct">Trésorerie nette & Capitaux propres</div><div class="chartbox"><canvas id="chTrendTN"></canvas></div></div></div>'+
+   '<div class="card"><div class="ct">Indicateurs par exercice</div>'+table+'<div class="foot-note" style="margin-top:8px">Indicateurs calculés depuis la balance de chaque exercice. La marge nette est le résultat net rapporté au chiffre d’affaires.</div></div>'+
+   add;
+}
+function wireTendances(){
+ var S=histSeries();
+ if(S.length>=2){
+   var years=S.map(function(x){return x.year;});
+   var ca=S.map(function(x){return kn(x.ind.CA);}), rn=S.map(function(x){return kn(x.ind.RN);}), tn=S.map(function(x){return kn(x.ind.TN);}), cp=S.map(function(x){return kn(x.ind.CP);});
+   var lopts={responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+" : "+fcomp(c.parsed.y);}}}},scales:{x:{grid:{display:false}},y:{grid:{color:"#eef0f3"},ticks:{callback:function(v){return fcomp(v);},font:{size:10}}}}};
+   mkChart("chTrendCA",{type:"line",data:{labels:years,datasets:[{label:"Chiffre d’affaires",data:ca,borderColor:FXPAL[0],backgroundColor:"rgba(23,37,84,.08)",borderWidth:2,tension:.3,fill:true,pointRadius:3},{label:"Résultat net",data:rn,borderColor:FXPAL[1],backgroundColor:"rgba(250,103,6,.08)",borderWidth:2,tension:.3,fill:true,pointRadius:3}]},options:lopts});
+   mkChart("chTrendTN",{type:"line",data:{labels:years,datasets:[{label:"Trésorerie nette",data:tn,borderColor:FXPAL[3],backgroundColor:"rgba(22,144,78,.08)",borderWidth:2,tension:.3,fill:true,pointRadius:3},{label:"Capitaux propres",data:cp,borderColor:FXPAL[2],backgroundColor:"rgba(34,66,137,.08)",borderWidth:2,tension:.3,fill:true,pointRadius:3}]},options:lopts});
+ }
+ var f=document.getElementById("tendFile");
+ if(f) f.onchange=function(){ var file=this.files&&this.files[0]; if(!file) return; var ys=document.getElementById("tendYear"); var y=ys?ys.value:""; if(!y){ alert("Choisis d’abord l’année."); return; } readWizFile(file,function(best){ var rows=parseAOA(best); if(!rows||!rows.length){ alert("Aucun compte détecté. Vérifie l’en‑tête (Compte / Libellé / Solde)."); return; } if(!store.data.hist) store.data.hist={}; store.data.hist[String(y)]=rows; persistActive(); render(); }); };
+ document.querySelectorAll("[data-delyear]").forEach(function(el){ el.onclick=function(){ var y=el.getAttribute("data-delyear"); if(store.data.hist&&store.data.hist[y]){ delete store.data.hist[y]; persistActive(); render(); } }; });
 }
 
 function viewDashboard(){
@@ -1094,8 +1155,8 @@ function tftDirect(aoa){
 }
 function viewTFTDirect(forPrint, dN, dN1){
  var exN=store.settings.exN, exN1=store.settings.exN1;
- function L(ref,lab,key,cls){ return '<tr class="'+(cls||"")+'"><td class="rf">'+(ref||"")+'</td><td>'+lab+'</td><td class="num">'+fmt(dN[key])+'</td><td class="num">'+(dN1?fmt(dN1[key]):"–")+'</td></tr>'; }
- function HH(lab){ return '<tr class="h"><td colspan="4">'+lab+'</td></tr>'; }
+ function L(ref,lab,key,cls){ return '<tr class="'+(cls||"")+'"><td class="rf">'+(ref||"")+'</td><td>'+lab+'</td><td class="num">'+fmt(dN[key])+'</td><td class="num">'+(dN1?fmt(dN1[key]):"–")+'</td><td class="num">'+(dN1?fvarp(dN[key],dN1[key]):"")+'</td></tr>'; }
+ function HH(lab){ return '<tr class="h"><td colspan="5">'+lab+'</td></tr>'; }
  var rows=
   L("ZA","Trésorerie nette au 1ᵉʳ janvier","ZA","tot")+
   HH("Flux de trésorerie des activités opérationnelles (méthode directe)")+
@@ -1123,7 +1184,7 @@ function viewTFTDirect(forPrint, dN, dN1){
   L("ZG","Trésorerie nette au 31 décembre","ZG","tot");
  var ctrl='<div class="ribbon" style="margin-top:14px;background:#e7f4ee;color:#0f6b3c;border-left:4px solid var(--green)"><b>Tableau bouclé.</b> Trésorerie de clôture '+fmt(dN.ZG)+', identique au bilan. Flux calculés directement depuis les mouvements de trésorerie du grand livre.</div>';
  return docHead("Tableau des flux de trésorerie",store.settings.dateN)+
-   '<table class="stmt"><thead><tr><th>Réf</th><th>Libellé</th><th class="num">Exercice '+exN+'</th><th class="num">Exercice '+exN1+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+ctrl+
+   '<table class="stmt"><thead><tr><th>Réf</th><th>Libellé</th><th class="num">Exercice '+exN+'</th><th class="num">Exercice '+exN1+'</th><th class="num">Var.</th></tr></thead><tbody>'+rows+'</tbody></table>'+ctrl+
    '<div class="foot-note">Présentation SYSCOHADA (Système Normal). Flux d’exploitation présentés selon la méthode directe, calculés à partir des journaux de trésorerie du grand livre ; le tableau boucle par construction avec la trésorerie nette du bilan.</div>';
 }
 
@@ -1274,8 +1335,8 @@ function viewTFT(forPrint){
  var oN=tftOfficial(store.data.N,divN), oN1=tftOfficial(store.data.N1,divN1);
  if(!oN) return viewTFTSimple(forPrint);
  var exN=store.settings.exN, exN1=store.settings.exN1;
- function L(ref,lab,key,cls){ return '<tr class="'+(cls||"")+'"><td class="rf">'+(ref||"")+'</td><td>'+lab+'</td><td class="num">'+fmt(oN[key])+'</td><td class="num">'+(oN1?fmt(oN1[key]):"–")+'</td></tr>'; }
- function HH(lab){ return '<tr class="h"><td colspan="4">'+lab+'</td></tr>'; }
+ function L(ref,lab,key,cls){ return '<tr class="'+(cls||"")+'"><td class="rf">'+(ref||"")+'</td><td>'+lab+'</td><td class="num">'+fmt(oN[key])+'</td><td class="num">'+(oN1?fmt(oN1[key]):"–")+'</td><td class="num">'+(oN1?fvarp(oN[key],oN1[key]):"")+'</td></tr>'; }
+ function HH(lab){ return '<tr class="h"><td colspan="5">'+lab+'</td></tr>'; }
  var rows=
   L("ZA","Trésorerie nette au 1ᵉʳ janvier","tO","tot")+
   HH("Flux de trésorerie des activités opérationnelles")+
@@ -1304,7 +1365,7 @@ function viewTFT(forPrint){
  var ok=Math.abs(oN.ctrl)<1000;
  var ctrl='<div class="ribbon" style="margin-top:14px;'+(ok?"background:#e7f4ee;color:#0f6b3c;border-left:4px solid var(--green)":"background:#fdeceb;color:#a3271b;border-left:4px solid var(--red)")+'">'+(ok?("Contrôle de bouclage validé — trésorerie de clôture "+fmt(oN.ZG)+", identique au bilan."):("Trésorerie de clôture exacte ("+fmt(oN.tC)+", = bilan). Mais "+fmt(oN.ECART)+" de flux n’ont pas pu être ventilés depuis la seule balance — saisis les dividendes/prélèvements (ligne FN) ou importe le grand livre pour un TFT détaillé."))+'</div>';
  return docHead("Tableau des flux de trésorerie",store.settings.dateN)+
-   '<table class="stmt"><thead><tr><th>Réf</th><th>Libellé</th><th class="num">Exercice '+exN+'</th><th class="num">Exercice '+exN1+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+ctrl+
+   '<table class="stmt"><thead><tr><th>Réf</th><th>Libellé</th><th class="num">Exercice '+exN+'</th><th class="num">Exercice '+exN1+'</th><th class="num">Var.</th></tr></thead><tbody>'+rows+'</tbody></table>'+ctrl+
    '<div class="foot-note">Modèle officiel SYSCOHADA (méthode indirecte). Acquisitions = additions brutes (mouvements débit des comptes 21-27, conformément à la Note 3A) ; encaissements de cessions = produits de cession. Dividendes saisis manuellement. Chaque colonne (N, N-1) est calculée depuis sa propre balance 6 colonnes.</div>';
 }
 function viewTFTSimple(forPrint){
@@ -1707,13 +1768,13 @@ function wireEmpty(){ document.querySelectorAll("[data-goempty]").forEach(functi
 function loadAnalyses(){ try{ var x=localStorage.getItem("fx_analyses"); return x?JSON.parse(x):{}; }catch(e){ return {}; } }
 function saveAnalyses(){ try{ var out={}; Object.keys(store.analyses).forEach(function(id){ if(id!=="demo") out[id]=store.analyses[id]; }); localStorage.setItem("fx_analyses",JSON.stringify(out)); }catch(e){} }
 function buildDemoAnalysis(){ return { id:"demo", name:"SOCIÉTÉ MODÈLE SARL", pays:"Sénégal", exN:"2024", exN1:"2023", dateN:"31/12/2024", dateN1:"31/12/2023", unite:"FCFA", ident:{sigle:"SOMOD",ninea:"SN-DEMO-0001",adresse:"Zone industrielle, Lot 12",ville:"Dakar",forme:"SARL",regime:"Réel normal",rccm:"SN-DKR-2020-B-1234",activite:"Commerce de distribution",dirNom:"Awa Ndiaye",dirQual:"Gérante",expert:"",centre:"CGE Dakar"}, manual:{}, comments:{}, overrides:{}, fiscal:{isRate:null,lines:{}}, dataN:(window.__EMBED__&&window.__EMBED__["2024"])||null, dataN1:(window.__EMBED__&&window.__EMBED__["2023"])||null, created:0, demo:true }; }
-function snapshotActive(){ var s=store.settings; var prev=store.analyses[store.activeId]||{}; return { id:store.activeId, name:s.entite, pays:s.pays, exN:s.exN, exN1:s.exN1, dateN:s.dateN, dateN1:s.dateN1, unite:s.unite, ident:s.ident||{}, manual:s.manual||{}, comments:s.noteComments||{}, overrides:s.overrides||{}, fiscal:s.fiscal||{isRate:null,lines:{}}, dataN:store.data.N||null, dataN1:store.data.N1||null, created:prev.created||Date.now() }; }
+function snapshotActive(){ var s=store.settings; var prev=store.analyses[store.activeId]||{}; return { id:store.activeId, name:s.entite, pays:s.pays, exN:s.exN, exN1:s.exN1, dateN:s.dateN, dateN1:s.dateN1, unite:s.unite, ident:s.ident||{}, manual:s.manual||{}, comments:s.noteComments||{}, overrides:s.overrides||{}, fiscal:s.fiscal||{isRate:null,lines:{}}, dataN:store.data.N||null, dataN1:store.data.N1||null, histData:(store.data.hist||{}), created:prev.created||Date.now() }; }
 function persistActive(){ if(store.activeId && store.activeId!=="demo"){ store.analyses[store.activeId]=snapshotActive(); saveAnalyses(); } }
-function activateAnalysis(id){ var a=store.analyses[id]; if(!a) return; store.activeId=id; store.settings={ entite:a.name||"", pays:a.pays||"Sénégal", exN:a.exN||"2024", exN1:a.exN1||"2023", dateN:a.dateN||("31/12/"+(a.exN||"2024")), dateN1:a.dateN1||("31/12/"+(a.exN1||"2023")), unite:a.unite||"FCFA", ident:a.ident||{}, manual:a.manual||{}, noteComments:a.comments||{}, overrides:a.overrides||{}, fiscal:a.fiscal||{isRate:null,lines:{}} }; store.data={ N:a.dataN||null, N1:a.dataN1||null }; store.computed={}; recompute(); try{localStorage.setItem("fx_active",id);}catch(e){} }
+function activateAnalysis(id){ var a=store.analyses[id]; if(!a) return; store.activeId=id; store.settings={ entite:a.name||"", pays:a.pays||"Sénégal", exN:a.exN||"2024", exN1:a.exN1||"2023", dateN:a.dateN||("31/12/"+(a.exN||"2024")), dateN1:a.dateN1||("31/12/"+(a.exN1||"2023")), unite:a.unite||"FCFA", ident:a.ident||{}, manual:a.manual||{}, noteComments:a.comments||{}, overrides:a.overrides||{}, fiscal:a.fiscal||{isRate:null,lines:{}} }; store.data={ N:a.dataN||null, N1:a.dataN1||null, hist:a.histData||{} }; store.computed={}; recompute(); try{localStorage.setItem("fx_active",id);}catch(e){} }
 function analysesList(){ return Object.keys(store.analyses).map(function(id){ return store.analyses[id]; }).sort(function(a,b){ if(a.id==="demo")return 1; if(b.id==="demo")return -1; return (b.created||0)-(a.created||0); }); }
 function switchTo(id){ if(id===store.activeId){ return; } persistActive(); activateAnalysis(id); buildShell(); navTo("accueil"); }
 function deleteAnalysis(id){ if(id==="demo")return; delete store.analyses[id]; saveAnalyses(); try{ societeApi("remove",{societe_id:id}); }catch(e){} if(store.activeId===id){ activateAnalysis("demo"); } buildShell(); navTo("accueil"); }
-function forkIfDemo(){ if(store.activeId!=="demo") return true; if(quotaReached()){ alert(quotaMsg()); return false; } var id="a"+Date.now(); store.activeId=id; store.settings={ entite:"", pays:store.settings.pays, exN:store.settings.exN, exN1:store.settings.exN1, dateN:store.settings.dateN, dateN1:store.settings.dateN1, unite:"FCFA", ident:{}, manual:{}, noteComments:{}, overrides:{}, fiscal:{isRate:null,lines:{}} }; store.data={N:null,N1:null}; store.analyses[id]=snapshotActive(); try{localStorage.setItem("fx_active",id);}catch(e){} try{ registerSociete(id,store.settings.entite||""); }catch(e){} return true; }
+function forkIfDemo(){ if(store.activeId!=="demo") return true; if(quotaReached()){ alert(quotaMsg()); return false; } var id="a"+Date.now(); store.activeId=id; store.settings={ entite:"", pays:store.settings.pays, exN:store.settings.exN, exN1:store.settings.exN1, dateN:store.settings.dateN, dateN1:store.settings.dateN1, unite:"FCFA", ident:{}, manual:{}, noteComments:{}, overrides:{}, fiscal:{isRate:null,lines:{}} }; store.data={N:null,N1:null,hist:{}}; store.analyses[id]=snapshotActive(); try{localStorage.setItem("fx_active",id);}catch(e){} try{ registerSociete(id,store.settings.entite||""); }catch(e){} return true; }
 function switcherMenuHTML(){ var list=analysesList(); var items=list.map(function(a){ var act=a.id===store.activeId; return '<div class="sw-item'+(act?" act":"")+'" data-aid="'+a.id+'"><div class="sw-i-main"><div class="sw-i-name">'+(esc(a.name)||"(sans nom)")+(a.demo?' <span class="sw-demo">démo</span>':'')+'</div><div class="sw-i-sub">Exercice '+esc(a.exN)+'</div></div>'+(a.demo?"":'<span class="sw-del" data-del="'+a.id+'" title="Supprimer">✕</span>')+'</div>'; }).join(""); return '<div class="sw-new" id="swNew">+ Nouvelle analyse</div><div class="sw-list">'+items+'</div>'; }
 function wireSwitcher(){ var m=document.getElementById("swMenu"); if(!m) return; m.innerHTML=switcherMenuHTML(); var b=document.getElementById("swBtn"); if(b) b.onclick=function(e){ e.stopPropagation(); m.classList.toggle("open"); }; var nw=document.getElementById("swNew"); if(nw) nw.onclick=function(e){ e.stopPropagation(); m.classList.remove("open"); showWizard(); }; m.querySelectorAll(".sw-item").forEach(function(it){ it.onclick=function(e){ if(e.target&&e.target.getAttribute&&e.target.getAttribute("data-del")) return; switchTo(it.getAttribute("data-aid")); }; }); m.querySelectorAll(".sw-del").forEach(function(d){ d.onclick=function(e){ e.stopPropagation(); if(window.confirm("Supprimer définitivement cette analyse ?")) deleteAnalysis(d.getAttribute("data-del")); }; }); }
 /* ---------- Wizard ---------- */
