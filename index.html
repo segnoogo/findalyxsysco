@@ -573,10 +573,11 @@ var NAV = [
  {sep:1},
  {id:"dashboard",ic:"chart",t:"Dashboard"},
  {id:"tendances",ic:"flow",t:"Tendances"},
+ {id:"previsionnel",ic:"chart",t:"Prévisionnel N+1"},
  {sep:1},
  {id:"parametres",ic:"gear",t:"Paramètres"}
 ];
-var TITLES = {accueil:"Accueil",import:"Import de la balance",controles:"Contrôles & anomalies",bilan:"Bilan",resultat:"Compte de résultat",tft:"Tableau des flux de trésorerie",notes:"Notes annexes",fiscal:"Tableaux fiscaux",dashboard:"Analyse financière",tendances:"Tendances pluriannuelles",parametres:"Paramètres"};
+var TITLES = {accueil:"Accueil",import:"Import de la balance",controles:"Contrôles & anomalies",bilan:"Bilan",resultat:"Compte de résultat",tft:"Tableau des flux de trésorerie",notes:"Notes annexes",fiscal:"Tableaux fiscaux",dashboard:"Analyse financière",tendances:"Tendances pluriannuelles",previsionnel:"Prévisionnel N+1",parametres:"Paramètres"};
 
 /* ---------- Helpers ---------- */
 function uf(){ return store.settings.unite==="millions"?1e6: store.settings.unite==="milliers"?1e3:1; }
@@ -665,6 +666,7 @@ function render(){
  else if(id==="dashboard"){ v.innerHTML=viewDashboard(); wireDashboard(); }
  else if(id==="parametres"){ v.innerHTML=viewParametres(); wireParam(); }
  else if(id==="tendances"){ v.innerHTML=viewTendances(); wireTendances(); }
+ else if(id==="previsionnel"){ v.innerHTML=viewPrevisionnel(); wirePrevisionnel(); }
  else v.innerHTML=viewSoon(id);
  v.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ navTo(b.getAttribute("data-go")); }; });
  wireTables();
@@ -929,6 +931,74 @@ function wireTendances(){
  var f=document.getElementById("tendFile");
  if(f) f.onchange=function(){ var file=this.files&&this.files[0]; if(!file) return; var ys=document.getElementById("tendYear"); var y=ys?ys.value:""; if(!y){ alert("Choisis d’abord l’année."); return; } readWizFile(file,function(best){ var rows=parseAOA(best); if(!rows||!rows.length){ alert("Aucun compte détecté. Vérifie l’en‑tête (Compte / Libellé / Solde)."); return; } if(!store.data.hist) store.data.hist={}; store.data.hist[String(y)]=rows; persistActive(); render(); }); };
  document.querySelectorAll("[data-delyear]").forEach(function(el){ el.onclick=function(){ var y=el.getAttribute("data-delyear"); if(store.data.hist&&store.data.hist[y]){ delete store.data.hist[y]; persistActive(); render(); } }; });
+}
+
+/* ---------- Prévisionnel N+1 (budget) ---------- */
+var PREVN1=null;
+function paysIS(p){ return p==="Burkina Faso"?0.275:((p==="Côte d’Ivoire"||p==="Côte d'Ivoire")?0.25:0.30); }
+function prevDefaults(){
+ var CA=cN("XB"), CA1=cN1("XB"), RE=cN("XE"), XF=cN("XF");
+ var g=(CA1>0)?((CA-CA1)/CA1*100):5; if(!isFinite(g)) g=5; g=Math.max(-50,Math.min(100,g));
+ var marge=CA?RE/CA*100:0;
+ return {gCA:Math.round(g*10)/10, marge:Math.round(marge*10)/10, rf:Math.round(XF), tis:Math.round(paysIS(store.settings.pays)*1000)/10, inv:0, div:0, _id:store.activeId};
+}
+function prevInit(){ if(!PREVN1 || PREVN1._id!==store.activeId) PREVN1=prevDefaults(); }
+function pfNum(v){ v=String(v==null?"":v).replace(/\s/g,"").replace(",","."); var n=parseFloat(v.replace(/[^0-9.\-]/g,"")); return isFinite(n)?n:0; }
+function prevCompute(P){
+ var CA=cN("XB"), RE=cN("XE"), XF=cN("XF"), RN=cN("XI"), EBE=cN("XD");
+ var TNn=vN("BU")-vN("DT"), dot=Math.max(0,EBE-RE);
+ var CA1=CA*(1+(P.gCA||0)/100);
+ var RE1=CA1*(P.marge||0)/100;
+ var RF1=P.rf||0;
+ var RAO1=RE1+RF1;
+ var IS1=RAO1>0?RAO1*(P.tis||0)/100:0;
+ var RN1=RAO1-IS1;
+ var CAFG1=RN1+dot;
+ var treso1=TNn+CAFG1-(P.inv||0)-(P.div||0);
+ return {CA:CA,CA1:CA1,RE:RE,RE1:RE1,RF:XF,RF1:RF1,RAO:cN("XG"),RAO1:RAO1,IS:cN("RS"),IS1:IS1,RN:RN,RN1:RN1,dot:dot,CAFG1:CAFG1,TN:TNn,treso1:treso1};
+}
+function prevOutHTML(){
+ var P=PREVN1, R=prevCompute(P);
+ var exN=store.settings.exN, exN1p=String((parseInt(exN,10)||2024)+1);
+ function row(lab,n,n1,strong){ return '<tr class="'+(strong?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(n)+'</td><td class="num">'+fmt(n1)+'</td><td class="num">'+fvarp(n1,n)+'</td></tr>'; }
+ var cr='<div class="card"><div class="ct">Compte de résultat prévisionnel</div>'+
+   '<table class="stmt"><thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(exN1p)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+   row("Chiffre d’affaires",R.CA,R.CA1)+
+   row("Résultat d’exploitation",R.RE,R.RE1)+
+   row("Résultat financier",R.RF,R.RF1)+
+   row("Résultat avant impôt",R.RAO,R.RAO1,true)+
+   row("Impôt sur le résultat",R.IS,R.IS1)+
+   row("Résultat net",R.RN,R.RN1,true)+
+   '</tbody></table></div>';
+ var tr='<div class="card"><div class="ct">Trésorerie prévisionnelle '+esc(exN1p)+'</div>'+
+   '<table class="stmt"><tbody>'+
+   '<tr><td>Trésorerie nette au 31/12/'+esc(exN)+'</td><td class="num">'+fmt(R.TN)+'</td></tr>'+
+   '<tr><td>+ Capacité d’autofinancement prévisionnelle</td><td class="num">'+fmt(R.CAFG1)+'</td></tr>'+
+   '<tr><td>− Investissements prévus</td><td class="num">'+fmt(-(P.inv||0))+'</td></tr>'+
+   '<tr><td>− Dividendes à verser</td><td class="num">'+fmt(-(P.div||0))+'</td></tr>'+
+   '<tr class="tot"><td>= Trésorerie nette prévisionnelle au 31/12/'+esc(exN1p)+'</td><td class="num">'+fmt(R.treso1)+'</td></tr>'+
+   '</tbody></table><div class="foot-note">Capacité d’autofinancement ≈ résultat net projeté + dotations aux amortissements de '+esc(exN)+' (supposées stables).</div></div>';
+ var dRN=R.RN1-R.RN;
+ var comment='<div class="ribbon" style="background:var(--lblue);color:var(--navy);border-left:4px solid var(--blue)">Avec une croissance du chiffre d’affaires de '+(Math.round((P.gCA||0)*10)/10)+' % et une marge d’exploitation de '+(Math.round((P.marge||0)*10)/10)+' %, le résultat net projeté '+esc(exN1p)+' serait de '+fmt(R.RN1)+' ('+(dRN>=0?"+":"")+fmt(dRN)+' vs '+esc(exN)+'), pour une trésorerie nette '+(R.treso1>=0?"positive":"négative")+' de '+fmt(R.treso1)+'.</div>';
+ return cr+tr+comment;
+}
+function viewPrevisionnel(){
+ if(!store.computed.N) return docHead("Prévisionnel N+1",store.settings.dateN)+'<div class="ribbon warn">Importe une balance pour établir un prévisionnel.</div>';
+ prevInit();
+ var P=PREVN1, exN=store.settings.exN, exN1p=String((parseInt(exN,10)||2024)+1);
+ function inp(key,lab){ return '<div class="field"><label>'+lab+'</label><input class="mnum" data-pf="'+key+'" value="'+esc(String(P[key]))+'" style="width:100%;text-align:right"></div>'; }
+ var hyp='<div class="card"><div class="ct">Hypothèses du prévisionnel '+esc(exN1p)+'</div>'+
+   '<div class="grid2">'+inp("gCA","Croissance du chiffre d’affaires (%)")+inp("marge","Marge d’exploitation cible (% du CA)")+'</div>'+
+   '<div class="grid2">'+inp("rf","Résultat financier prévu (montant)")+inp("tis","Taux d’impôt sur le résultat (%)")+'</div>'+
+   '<div class="grid2">'+inp("inv","Investissements prévus (montant)")+inp("div","Dividendes à verser (montant)")+'</div>'+
+   '<div class="foot-note">Valeurs par défaut : croissance = tendance N‑1→N, marge = marge d’exploitation actuelle, taux d’impôt = barème du pays. Ajuste librement pour simuler des scénarios.</div></div>';
+ return docHead("Prévisionnel N+1 (budget)",store.settings.dateN)+
+   '<div class="subtle">Projection simple et transparente de l’exercice '+esc(exN1p)+' à partir de '+esc(exN)+', pilotée par tes hypothèses. Aide à la décision — ne constitue pas un état officiel ni un conseil financier.</div>'+
+   hyp+'<div id="prevOut">'+prevOutHTML()+'</div>';
+}
+function wirePrevisionnel(){
+ prevInit();
+ document.querySelectorAll("[data-pf]").forEach(function(el){ el.oninput=function(){ PREVN1[el.getAttribute("data-pf")]=pfNum(el.value); var o=document.getElementById("prevOut"); if(o) o.innerHTML=prevOutHTML(); }; });
 }
 
 function viewDashboard(){
