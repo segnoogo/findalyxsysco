@@ -662,9 +662,45 @@ function render(){
  wireTables();
 }
 
+/* ---------- White-label : logo du cabinet ---------- */
+function cabLogo(){ try{ return localStorage.getItem("fx_cablogo")||""; }catch(e){ return ""; } }
+function removeCabLogo(){ try{ localStorage.removeItem("fx_cablogo"); }catch(e){} render(); }
+function onCabLogoFile(file){
+ if(!file) return;
+ if(!/^image\//.test(file.type||"")){ alert("Choisis un fichier image (PNG, JPG…)."); return; }
+ var rd=new FileReader();
+ rd.onload=function(){
+  var img=new Image();
+  img.onload=function(){
+   var maxW=440, sc=Math.min(1, maxW/(img.width||maxW));
+   var w=Math.max(1,Math.round((img.width||maxW)*sc)), h=Math.max(1,Math.round((img.height||120)*sc));
+   var c=document.createElement("canvas"); c.width=w; c.height=h;
+   try{ c.getContext("2d").drawImage(img,0,0,w,h); }catch(e){}
+   var url; try{ url=c.toDataURL("image/png"); }catch(e){ url=String(rd.result||""); }
+   try{ localStorage.setItem("fx_cablogo", url); }catch(e){ alert("Logo trop lourd pour être enregistré. Choisis une image plus légère."); return; }
+   render();
+  };
+  img.onerror=function(){ alert("Fichier image non valide."); };
+  img.src=String(rd.result||"");
+ };
+ rd.readAsDataURL(file);
+}
+function wlCard(){
+ var has=cabLogo();
+ return '<div class="card"><div class="ct">Personnalisation — logo du cabinet (white-label)</div>'+
+  '<div class="subtle" style="margin:0 0 10px">Ce logo apparaît en en-tête de vos états et sur la note de synthèse (à l’écran et dans les exports PDF/Word). Il est enregistré sur cet appareil, pour toutes vos analyses.</div>'+
+  '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">'+
+   '<div style="min-width:150px;min-height:54px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:8px;background:#fff">'+(has?'<img src="'+has+'" style="max-height:44px;max-width:200px"/>':'<span class="subtle" style="margin:0">Aucun logo</span>')+'</div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+     '<label class="btn sm">'+(has?"Changer le logo":"Choisir un logo")+'<input type="file" id="pCabLogo" accept="image/*" hidden></label>'+
+     (has?'<button class="btn sm" id="pCabLogoDel" style="color:var(--red);border-color:var(--red)">Retirer</button>':'')+
+   '</div>'+
+  '</div></div>';
+}
+
 function docHead(title,date){ var s=store.settings;
  var meta=(date?('au '+esc(date)+' · '):'')+'Système Normal · '+esc(s.pays)+' · '+uniteLabel();
- return '<div class="docHead"><div class="dh"><div class="dh-t">'+((esc(s.entite)||'Société')+' | '+esc(title))+'</div>'+
+ return '<div class="docHead">'+(cabLogo()?'<img src="'+cabLogo()+'" alt=""/>':'')+'<div class="dh"><div class="dh-t">'+((esc(s.entite)||'Société')+' | '+esc(title))+'</div>'+
   '<div class="dh-s">'+meta+'</div></div></div>';
 }
 
@@ -814,7 +850,7 @@ function exportSyntheseWord(){
  var s=store.settings, ent=esc(s.entite||"Société");
  var paras=fxSynthParas().map(function(t){ return '<p style="margin:0 0 10px;line-height:1.5">'+esc(t)+'</p>'; }).join("");
  var rows=fxSynthIndics().map(function(r){ return '<tr><td>'+esc(r[0])+'</td><td style="text-align:right">'+esc(r[1])+'</td><td style="text-align:right">'+esc(r[2])+'</td></tr>'; }).join("");
- var logo=window.__LOGO__?'<img src="'+window.__LOGO__+'" style="height:34px"/>':'';
+ var _lg=cabLogo()||window.__LOGO__; var logo=_lg?'<img src="'+_lg+'" style="height:34px"/>':'';
  var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Note de synthèse</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#1f2937;font-size:11pt">'+
   '<table style="width:100%"><tr><td>'+logo+'</td><td style="text-align:right;font-size:9pt;color:#6b7280">Note de synthèse<br/>Exercice clos le '+esc(s.dateN)+'</td></tr></table>'+
   '<h1 style="color:#172554;font-size:18pt;margin:14px 0 2px">'+ent+'</h1>'+
@@ -1174,7 +1210,7 @@ function viewParametres(){
    '<div class="field"><label>Unité d’affichage</label><select class="sel" id="pUnit"><option value="FCFA">FCFA</option><option value="milliers">Milliers de FCFA</option><option value="millions">Millions de FCFA</option></select></div>'+
    '<button class="btn primary" id="pSave">Appliquer</button></div>';
  var map='<div class="card"><details class="param-fold"><summary class="fold-sum">Mapping des comptes <span class="fold-sub">— déplier pour vérifier ou ajuster le rattachement des comptes</span></summary><div style="margin-top:12px">'+mappingBody()+'</div></details></div>';
- return docHead("Paramètres","")+id+map+licStatusCard();
+ return docHead("Paramètres","")+id+wlCard()+map+licStatusCard();
 }
 function wireParam(){
  function val(id){ var el=document.getElementById(id); return el?el.value:""; }
@@ -1184,7 +1220,7 @@ function wireParam(){
    s.entite=val("pEnt"); s.pays=val("pPays"); s.exN=val("pExN"); s.exN1=val("pExN1"); s.dateN=val("pDN"); s.dateN1=val("pDN1"); s.unite=document.getElementById("pUnit").value; s.ident={sigle:val("pSigle"),ninea:val("pNinea"),adresse:val("pAdr"),ville:val("pVille"),forme:val("pForme"),regime:val("pRegime"),rccm:val("pRccm"),activite:val("pAct"),dirNom:val("pDir"),dirQual:val("pQual"),expert:val("pExpert"),centre:val("pCentre")};
    persistActive(); render();
  };
- wireMapping(); var lrb=document.getElementById("licRenewBtn"); if(lrb) lrb.onclick=function(){ var v=document.getElementById("licRenew").value; var b=this; b.disabled=true; b.textContent="Vérification…"; checkLicence(v).then(function(rr){ b.disabled=false; b.textContent="Mettre à jour la licence"; if(rr.ok){ try{localStorage.setItem("fx_licence", String(v).replace(/\s+/g,""));}catch(e){} location.reload(); } else { var er=document.getElementById("licRenewErr"); if(er) er.textContent= licErrMsg(rr); } }); };
+ var cl=document.getElementById("pCabLogo"); if(cl) cl.onchange=function(){ var f=this.files&&this.files[0]; if(f) onCabLogoFile(f); }; var cld=document.getElementById("pCabLogoDel"); if(cld) cld.onclick=removeCabLogo; wireMapping(); var lrb=document.getElementById("licRenewBtn"); if(lrb) lrb.onclick=function(){ var v=document.getElementById("licRenew").value; var b=this; b.disabled=true; b.textContent="Vérification…"; checkLicence(v).then(function(rr){ b.disabled=false; b.textContent="Mettre à jour la licence"; if(rr.ok){ try{localStorage.setItem("fx_licence", String(v).replace(/\s+/g,""));}catch(e){} location.reload(); } else { var er=document.getElementById("licRenewErr"); if(er) er.textContent= licErrMsg(rr); } }); };
 }
 function tftCalc(){
  var tresoP=vN1("BU")-vN1("DT");
