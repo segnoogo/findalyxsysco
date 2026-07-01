@@ -909,8 +909,13 @@ function viewTendances(){
  }
  var years=S.map(function(x){return x.year;});
  var rowsDef=[["Chiffre d’affaires","CA","amt"],["Valeur ajoutée","VA","amt"],["Excédent brut d’exploitation","EBE","amt"],["Résultat d’exploitation","RE","amt"],["Résultat net","RN","amt"],["Capitaux propres","CP","amt"],["Total du bilan","BZ","amt"],["Trésorerie nette","TN","amt"],["Marge nette","MN","pct"]];
- var head='<tr><th>Indicateur</th>'+years.map(function(y){return '<th class="num">'+esc(y)+'</th>';}).join("")+'</tr>';
- var body=rowsDef.map(function(d){ return '<tr><td>'+d[0]+'</td>'+S.map(function(x){ var v=x.ind[d[1]]; return '<td class="num">'+(d[2]==="pct"?((Math.round(v*10)/10).toLocaleString("fr-FR")+" %"):fmt(v))+'</td>'; }).join("")+'</tr>'; }).join("");
+ var n=S.length, showCagr=n>=3;
+ function _cagr(f,l,per){ if(per<=0) return ""; if(!(f>0)||!(l>0)) return "n.a."; var r=(Math.pow(l/f,1/per)-1)*100; if(!isFinite(r)) return "n.a."; return (r>=0?"+":"")+(Math.round(r*10)/10).toLocaleString("fr-FR")+" %"; }
+ var head='<tr><th>Indicateur</th>'+S.map(function(x,i){ return '<th class="num">'+esc(x.year)+'</th>'+(i>0?'<th class="num" style="color:var(--muted)">\u0394%</th>':''); }).join("")+(showCagr?'<th class="num">CAGR</th>':'')+'</tr>';
+ var body=rowsDef.map(function(d){ var cells='<td>'+d[0]+'</td>';
+   S.forEach(function(x,i){ var v=x.ind[d[1]]; cells+='<td class="num">'+(d[2]==="pct"?((Math.round(v*10)/10).toLocaleString("fr-FR")+" %"):fmt(v))+'</td>'; if(i>0){ var pv=S[i-1].ind[d[1]]; cells+='<td class="num" style="color:var(--muted)">'+(d[2]==="pct"?((Math.round((v-pv)*10)/10).toLocaleString("fr-FR")+" pts"):fvarp(v,pv))+'</td>'; } });
+   if(showCagr){ var f=S[0].ind[d[1]], l=S[n-1].ind[d[1]]; cells+='<td class="num">'+(d[2]==="pct"?"\u2014":_cagr(f,l,n-1))+'</td>'; }
+   return '<tr>'+cells+'</tr>'; }).join("");
  var table='<table class="stmt"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
  return docHead("Tendances pluriannuelles",store.settings.dateN)+
    '<div class="subtle">Évolution des principaux indicateurs sur '+years.length+' exercices ('+esc(years[0])+' → '+esc(years[years.length-1])+'). Montants en '+uniteLabel()+'.</div>'+
@@ -935,65 +940,73 @@ function wireTendances(){
 
 /* ---------- Prévisionnel N+1 (budget) ---------- */
 var PREVN1=null;
+function _pr1(x){ return Math.round(x*10)/10; }
 function paysIS(p){ return p==="Burkina Faso"?0.275:((p==="Côte d’Ivoire"||p==="Côte d'Ivoire")?0.25:0.30); }
 function prevDefaults(){
- var CA=cN("XB"), CA1=cN1("XB"), RE=cN("XE"), XF=cN("XF");
+ var CA=cN("XB"), CA1=cN1("XB"), RE=cN("XE"), XF=cN("XF"), EBE=cN("XD");
  var g=(CA1>0)?((CA-CA1)/CA1*100):5; if(!isFinite(g)) g=5; g=Math.max(-50,Math.min(100,g));
- var marge=CA?RE/CA*100:0;
- return {gCA:Math.round(g*10)/10, marge:Math.round(marge*10)/10, rf:Math.round(XF), tis:Math.round(paysIS(store.settings.pays)*1000)/10, inv:0, div:0, _id:store.activeId};
+ var marge=CA?RE/CA*100:0, bfr=vN("BK")-vN("DP"), bfrPct=CA?bfr/CA*100:0, dot=Math.max(0,EBE-RE);
+ return {gCA:_pr1(g), marge:_pr1(marge), rf:Math.round(XF), tis:_pr1(paysIS(store.settings.pays)*100), dot:Math.round(dot), bfrPct:_pr1(bfrPct), inv:0, empNew:0, empRemb:0, augCap:0, div:0, _id:store.activeId};
 }
 function prevInit(){ if(!PREVN1 || PREVN1._id!==store.activeId) PREVN1=prevDefaults(); }
 function pfNum(v){ v=String(v==null?"":v).replace(/\s/g,"").replace(",","."); var n=parseFloat(v.replace(/[^0-9.\-]/g,"")); return isFinite(n)?n:0; }
 function prevCompute(P){
  var CA=cN("XB"), RE=cN("XE"), XF=cN("XF"), RN=cN("XI"), EBE=cN("XD");
- var TNn=vN("BU")-vN("DT"), dot=Math.max(0,EBE-RE);
+ var AZ=vN("AZ"), CP=vN("CP"), DD=vN("DD"), DF=vN("DF");
+ var BFR=vN("BK")-vN("DP"), TN=vN("BU")-vN("DT"), AR=DF-CP-DD;
  var CA1=CA*(1+(P.gCA||0)/100);
  var RE1=CA1*(P.marge||0)/100;
- var RF1=P.rf||0;
- var RAO1=RE1+RF1;
+ var RAO1=RE1+(P.rf||0);
  var IS1=RAO1>0?RAO1*(P.tis||0)/100:0;
- var RN1=RAO1-IS1;
- var CAFG1=RN1+dot;
- var treso1=TNn+CAFG1-(P.inv||0)-(P.div||0);
- return {CA:CA,CA1:CA1,RE:RE,RE1:RE1,RF:XF,RF1:RF1,RAO:cN("XG"),RAO1:RAO1,IS:cN("RS"),IS1:IS1,RN:RN,RN1:RN1,dot:dot,CAFG1:CAFG1,TN:TNn,treso1:treso1};
+ var RN1=RAO1-IS1, dot=P.dot||0, CAFG1=RN1+dot;
+ var BFR1=CA1*(P.bfrPct||0)/100, dBFR=BFR1-BFR;
+ var AZ1=AZ+(P.inv||0)-dot, CP1=CP+RN1+(P.augCap||0)-(P.div||0), DD1=DD+(P.empNew||0)-(P.empRemb||0);
+ var RS1=CP1+DD1+AR, FR1=RS1-AZ1, TN1=FR1-BFR1;
+ var fluxOp=CAFG1-dBFR, fluxInv=-(P.inv||0), fluxFin=(P.empNew||0)-(P.empRemb||0)+(P.augCap||0)-(P.div||0), dTN=fluxOp+fluxInv+fluxFin;
+ return {CA:CA,CA1:CA1,RE:RE,RE1:RE1,RF:XF,RF1:(P.rf||0),RAO:cN("XG"),RAO1:RAO1,IS:cN("RS"),IS1:IS1,RN:RN,RN1:RN1,
+   dot:dot,CAFG1:CAFG1,BFR:BFR,BFR1:BFR1,dBFR:dBFR,AZ:AZ,AZ1:AZ1,CP:CP,CP1:CP1,DD:DD,DD1:DD1,AR:AR,RS1:RS1,FR1:FR1,
+   TN:TN,TN1:TN1,fluxOp:fluxOp,fluxInv:fluxInv,fluxFin:fluxFin,dTN:dTN};
 }
 function prevOutHTML(){
- var P=PREVN1, R=prevCompute(P);
- var exN=store.settings.exN, exN1p=String((parseInt(exN,10)||2024)+1);
- function row(lab,n,n1,strong){ return '<tr class="'+(strong?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(n)+'</td><td class="num">'+fmt(n1)+'</td><td class="num">'+fvarp(n1,n)+'</td></tr>'; }
- var cr='<div class="card"><div class="ct">Compte de résultat prévisionnel</div>'+
-   '<table class="stmt"><thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(exN1p)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
-   row("Chiffre d’affaires",R.CA,R.CA1)+
-   row("Résultat d’exploitation",R.RE,R.RE1)+
-   row("Résultat financier",R.RF,R.RF1)+
-   row("Résultat avant impôt",R.RAO,R.RAO1,true)+
-   row("Impôt sur le résultat",R.IS,R.IS1)+
-   row("Résultat net",R.RN,R.RN1,true)+
+ var P=PREVN1, R=prevCompute(P), exN=store.settings.exN, xp=String((parseInt(exN,10)||2024)+1);
+ function r3(lab,n,n1,st){ return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(n)+'</td><td class="num">'+fmt(n1)+'</td><td class="num">'+fvarp(n1,n)+'</td></tr>'; }
+ function r2(lab,v,st){ return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(v)+'</td></tr>'; }
+ var cr='<div class="card"><div class="ct">1 · Compte de résultat prévisionnel</div><table class="stmt"><thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+   r3("Chiffre d’affaires",R.CA,R.CA1)+r3("Résultat d’exploitation",R.RE,R.RE1)+r3("Résultat financier",R.RF,R.RF1)+r3("Résultat avant impôt",R.RAO,R.RAO1,true)+r3("Impôt sur le résultat",R.IS,R.IS1)+r3("Résultat net",R.RN,R.RN1,true)+'</tbody></table></div>';
+ var bil='<div class="card"><div class="ct">2 · Bilan prévisionnel synthétique '+esc(xp)+'</div><table class="stmt"><tbody>'+
+   r2("Capitaux propres",R.CP1)+r2("Dettes financières",R.DD1)+r2("Autres ressources stables",R.AR)+r2("Ressources stables",R.RS1,true)+
+   r2("− Actif immobilisé net",R.AZ1)+r2("= Fonds de roulement (FR)",R.FR1,true)+r2("− Besoin en fonds de roulement (BFR)",R.BFR1)+r2("= Trésorerie nette",R.TN1,true)+
+   '</tbody></table><div class="foot-note">Bilan condensé (grandes masses). La trésorerie nette est le solde du fonds de roulement et du BFR — le bilan est équilibré par construction.</div></div>';
+ var tft='<div class="card"><div class="ct">3 · Flux de trésorerie prévisionnel '+esc(xp)+'</div><table class="stmt"><tbody>'+
+   r2("Trésorerie nette au 31/12/"+esc(exN),R.TN)+
+   r2("Capacité d’autofinancement (CAFG)",R.CAFG1)+r2("− Variation du besoin en fonds de roulement",-R.dBFR)+r2("= Flux de trésorerie opérationnels",R.fluxOp,true)+
+   r2("Flux d’investissement (acquisitions)",R.fluxInv)+r2("Flux de financement (emprunts, capital, dividendes)",R.fluxFin)+r2("= Variation de trésorerie",R.dTN,true)+
+   r2("Trésorerie nette prévisionnelle au 31/12/"+esc(xp),R.TN1,true)+
    '</tbody></table></div>';
- var tr='<div class="card"><div class="ct">Trésorerie prévisionnelle '+esc(exN1p)+'</div>'+
-   '<table class="stmt"><tbody>'+
-   '<tr><td>Trésorerie nette au 31/12/'+esc(exN)+'</td><td class="num">'+fmt(R.TN)+'</td></tr>'+
-   '<tr><td>+ Capacité d’autofinancement prévisionnelle</td><td class="num">'+fmt(R.CAFG1)+'</td></tr>'+
-   '<tr><td>− Investissements prévus</td><td class="num">'+fmt(-(P.inv||0))+'</td></tr>'+
-   '<tr><td>− Dividendes à verser</td><td class="num">'+fmt(-(P.div||0))+'</td></tr>'+
-   '<tr class="tot"><td>= Trésorerie nette prévisionnelle au 31/12/'+esc(exN1p)+'</td><td class="num">'+fmt(R.treso1)+'</td></tr>'+
-   '</tbody></table><div class="foot-note">Capacité d’autofinancement ≈ résultat net projeté + dotations aux amortissements de '+esc(exN)+' (supposées stables).</div></div>';
  var dRN=R.RN1-R.RN;
- var comment='<div class="ribbon" style="background:var(--lblue);color:var(--navy);border-left:4px solid var(--blue)">Avec une croissance du chiffre d’affaires de '+(Math.round((P.gCA||0)*10)/10)+' % et une marge d’exploitation de '+(Math.round((P.marge||0)*10)/10)+' %, le résultat net projeté '+esc(exN1p)+' serait de '+fmt(R.RN1)+' ('+(dRN>=0?"+":"")+fmt(dRN)+' vs '+esc(exN)+'), pour une trésorerie nette '+(R.treso1>=0?"positive":"négative")+' de '+fmt(R.treso1)+'.</div>';
- return cr+tr+comment;
+ var comment='<div class="ribbon" style="background:var(--lblue);color:var(--navy);border-left:4px solid var(--blue)">Scénario '+esc(xp)+' : chiffre d’affaires '+fmt(R.CA1)+' (croissance '+_pr1(P.gCA||0)+' %), résultat net '+fmt(R.RN1)+' ('+(dRN>=0?"+":"")+fmt(dRN)+' vs '+esc(exN)+'), trésorerie nette '+(R.TN1>=0?"positive":"négative")+' de '+fmt(R.TN1)+'.</div>';
+ return cr+bil+tft+comment;
 }
 function viewPrevisionnel(){
  if(!store.computed.N) return docHead("Prévisionnel N+1",store.settings.dateN)+'<div class="ribbon warn">Importe une balance pour établir un prévisionnel.</div>';
  prevInit();
- var P=PREVN1, exN=store.settings.exN, exN1p=String((parseInt(exN,10)||2024)+1);
+ var P=PREVN1, exN=store.settings.exN, xp=String((parseInt(exN,10)||2024)+1);
  function inp(key,lab){ return '<div class="field"><label>'+lab+'</label><input class="mnum" data-pf="'+key+'" value="'+esc(String(P[key]))+'" style="width:100%;text-align:right"></div>'; }
- var hyp='<div class="card"><div class="ct">Hypothèses du prévisionnel '+esc(exN1p)+'</div>'+
+ function grp(t){ return '<div style="margin:12px 0 8px;font-size:12px;font-weight:600;color:var(--muted)">'+t+'</div>'; }
+ var hyp='<div class="card"><details class="param-fold" open><summary class="fold-sum">Hypothèses du prévisionnel '+esc(xp)+' <span class="fold-sub">— déplier / replier pour ajuster</span></summary><div style="margin-top:12px">'+
+   grp("Activité & rentabilité")+
    '<div class="grid2">'+inp("gCA","Croissance du chiffre d’affaires (%)")+inp("marge","Marge d’exploitation cible (% du CA)")+'</div>'+
    '<div class="grid2">'+inp("rf","Résultat financier prévu (montant)")+inp("tis","Taux d’impôt sur le résultat (%)")+'</div>'+
-   '<div class="grid2">'+inp("inv","Investissements prévus (montant)")+inp("div","Dividendes à verser (montant)")+'</div>'+
-   '<div class="foot-note">Valeurs par défaut : croissance = tendance N‑1→N, marge = marge d’exploitation actuelle, taux d’impôt = barème du pays. Ajuste librement pour simuler des scénarios.</div></div>';
+   grp("Investissement & exploitation")+
+   '<div class="grid2">'+inp("dot","Dotations aux amortissements (montant)")+inp("bfrPct","Besoin en fonds de roulement (% du CA)")+'</div>'+
+   '<div class="grid2">'+inp("inv","Investissements / acquisitions (montant)")+'<div></div></div>'+
+   grp("Financement")+
+   '<div class="grid2">'+inp("empNew","Nouveaux emprunts (montant)")+inp("empRemb","Remboursements d’emprunts (montant)")+'</div>'+
+   '<div class="grid2">'+inp("augCap","Augmentation de capital (montant)")+inp("div","Dividendes à verser (montant)")+'</div>'+
+   '<div class="foot-note" style="margin-top:10px">Valeurs par défaut calculées depuis l’exercice '+esc(exN)+' (croissance = tendance, marge & BFR = niveaux actuels, impôt = barème du pays). Ajuste pour simuler des scénarios.</div>'+
+   '</div></details></div>';
  return docHead("Prévisionnel N+1 (budget)",store.settings.dateN)+
-   '<div class="subtle">Projection simple et transparente de l’exercice '+esc(exN1p)+' à partir de '+esc(exN)+', pilotée par tes hypothèses. Aide à la décision — ne constitue pas un état officiel ni un conseil financier.</div>'+
+   '<div class="subtle">Projection des 3 états de synthèse de l’exercice '+esc(xp)+' à partir de '+esc(exN)+', pilotée par tes hypothèses. Aide à la décision — ne constitue pas un état officiel ni un conseil financier.</div>'+
    hyp+'<div id="prevOut">'+prevOutHTML()+'</div>';
 }
 function wirePrevisionnel(){
