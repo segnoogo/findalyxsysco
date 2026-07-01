@@ -109,8 +109,13 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);backgr
 .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
 .lg b{color:var(--navy);font-variant-numeric:tabular-nums}
 .actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
-.stmt{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.stmt{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:10px}
 .stmt thead th{background:var(--navy);color:#fff;font-size:12px;font-weight:600;text-align:left;padding:9px 10px}
+.stmt thead th{position:sticky;top:var(--topH,56px);z-index:2}
+.stmt thead th:first-child{border-top-left-radius:10px}
+.stmt thead th:last-child{border-top-right-radius:10px}
+.stmt tbody tr:last-child td:first-child{border-bottom-left-radius:10px}
+.stmt tbody tr:last-child td:last-child{border-bottom-right-radius:10px}
 .stmt th.num,.stmt td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .stmt td{padding:7px 10px;border-top:1px solid #eef0f3}
 .stmt td.rf{color:var(--muted);font-size:11.5px;width:40px}
@@ -599,6 +604,7 @@ function recompute(){
 /* ---------- Layout ---------- */
 function licFootHTML(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); if(dd>30) return ""; var cls=dd<0?" lic-foot-exp":" lic-foot-soon"; var txt=dd<0?"Abonnement expiré — à renouveler":("Abonnement : expire dans "+dd+" j<br>("+esc(L.exp)+")"); return '<div class="sfoot-lic'+cls+'">'+txt+'</div>'; }catch(e){ return ""; } }
 function licStatusCard(){ try{ var L=window.__LICINFO__; if(!L||!L.exp) return ""; var dd=Math.ceil((new Date(L.exp+"T00:00:00")-new Date())/86400000); var st=dd<0?["Expiré","exp"]:(dd<=30?["Expire bientôt","soon"]:["Actif","ok"]); var md=L.mode==="online"?'<span class="pill ok">En ligne</span>':(L.mode==="grace"?('Hors-ligne (vérifié le '+esc(L.last||"?")+')'):(L.mode==="owner"?'Clé propriétaire (hors-ligne)':'—')); return '<div class="card"><div class="ct">Abonnement Findalyx</div><table class="kv"><tr><td>Titulaire de la licence</td><td>'+esc(L.customer||"—")+'</td></tr><tr><td>Statut</td><td><span class="pill '+st[1]+'">'+st[0]+'</span></td></tr><tr><td>Vérification</td><td>'+md+'</td></tr><tr><td>Expire le</td><td>'+esc(L.exp)+'</td></tr><tr><td>Jours restants</td><td>'+(dd<0?"—":dd+" jours")+'</td></tr><tr><td>Societes analysees</td><td>'+quotaUsed()+(quotaMax()>0?(" / "+quotaMax()):" (illimite)")+'</td></tr></table><details class="wz-more" style="margin-top:12px"><summary>Renouveler / saisir une nouvelle clé</summary><div style="margin-top:8px"><textarea id="licRenew" class="lic-in" placeholder="Colle ici ta nouvelle clé"></textarea><div id="licRenewErr" class="lic-err"></div><button class="btn primary" id="licRenewBtn">Mettre à jour la licence</button></div></details></div>'; }catch(e){ return ""; } }
+function _setTopH(){ try{ var t=document.querySelector(".top"); if(t) document.documentElement.style.setProperty("--topH",(t.offsetHeight)+"px"); }catch(e){} }
 function buildShell(){
  var nav = NAV.map(function(n){
    if(n.sep) return '<div class="sep"></div>';
@@ -627,7 +633,7 @@ function buildShell(){
  document.getElementById("btnPrint").onclick=function(e){ e.stopPropagation(); var m=document.getElementById("pdfMenu"); if(m) m.classList.toggle("open"); };
  document.querySelectorAll("#pdfMenu [data-pdf]").forEach(function(it){ it.onclick=function(){ var m=document.getElementById("pdfMenu"); if(m) m.classList.remove("open"); if(it.getAttribute("data-pdf")==="full") exportPDFComplete(); else exportPDF(); }; });
  document.addEventListener("click",function(){ var m=document.getElementById("pdfMenu"); if(m) m.classList.remove("open"); var sm=document.getElementById("swMenu"); if(sm) sm.classList.remove("open"); });
- document.getElementById("btnXlsx").onclick=exportExcel; wireSwitcher();
+ document.getElementById("btnXlsx").onclick=exportExcel; wireSwitcher(); _setTopH(); if(!window.__thR){ window.__thR=true; window.addEventListener("resize",_setTopH); }
 }
 function navTo(id){ store.route=id; document.querySelectorAll(".nav .item").forEach(function(a){ a.classList.toggle("active", a.getAttribute("data-id")===id); }); render(); }
 
@@ -850,7 +856,7 @@ function exportSyntheseWord(){
  var s=store.settings, ent=esc(s.entite||"Société");
  var paras=fxSynthParas().map(function(t){ return '<p style="margin:0 0 10px;line-height:1.5">'+esc(t)+'</p>'; }).join("");
  var rows=fxSynthIndics().map(function(r){ return '<tr><td>'+esc(r[0])+'</td><td style="text-align:right">'+esc(r[1])+'</td><td style="text-align:right">'+esc(r[2])+'</td></tr>'; }).join("");
- var _lg=cabLogo()||window.__LOGO__; var logo=_lg?'<img src="'+_lg+'" style="height:34px"/>':'';
+ var _lg=cabLogo()||window.__LOGO__; var logo=_lg?'<img src="'+_lg+'" width="150" style="width:150px;height:auto"/>':'';
  var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Note de synthèse</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#1f2937;font-size:11pt">'+
   '<table style="width:100%"><tr><td>'+logo+'</td><td style="text-align:right;font-size:9pt;color:#6b7280">Note de synthèse<br/>Exercice clos le '+esc(s.dateN)+'</td></tr></table>'+
   '<h1 style="color:#172554;font-size:18pt;margin:14px 0 2px">'+ent+'</h1>'+
