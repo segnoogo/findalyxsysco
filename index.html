@@ -970,22 +970,29 @@ function prevCompute(P){
    TN:TN,TN1:TN1,fluxOp:fluxOp,fluxInv:fluxInv,fluxFin:fluxFin,dTN:dTN};
 }
 function prevOutHTML(){
- var P=PREVN1, R=prevCompute(P), exN=store.settings.exN, xp=String((parseInt(exN,10)||2024)+1);
+ var P=PREVN1, R=prevCompute(P), exN=store.settings.exN, exN1=store.settings.exN1, xp=String((parseInt(exN,10)||2024)+1);
+ var CG='<colgroup><col style="width:40%"><col style="width:22%"><col style="width:22%"><col style="width:16%"></colgroup>';
  function r3(lab,n,n1,st){ return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(n)+'</td><td class="num">'+fmt(n1)+'</td><td class="num">'+fvarp(n1,n)+'</td></tr>'; }
- function r2(lab,v,st){ return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+fmt(v)+'</td></tr>'; }
- var cr='<div class="card"><div class="ct">1 · Compte de résultat prévisionnel</div><table class="stmt"><thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+ var cr='<div class="card"><div class="ct">1 · Compte de résultat prévisionnel</div><table class="stmt" style="table-layout:fixed">'+CG+'<thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
    r3("Chiffre d’affaires",R.CA,R.CA1)+r3("Résultat d’exploitation",R.RE,R.RE1)+r3("Résultat financier",R.RF,R.RF1)+r3("Résultat avant impôt",R.RAO,R.RAO1,true)+r3("Impôt sur le résultat",R.IS,R.IS1)+r3("Résultat net",R.RN,R.RN1,true)+'</tbody></table></div>';
  var RS0=R.CP+R.DD+R.AR, FR0=RS0-R.AZ;
- var bil='<div class="card"><div class="ct">2 · Bilan prévisionnel synthétique</div><table class="stmt"><thead><tr><th>Grandes masses</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+ var bil='<div class="card"><div class="ct">2 · Bilan prévisionnel synthétique</div><table class="stmt" style="table-layout:fixed">'+CG+'<thead><tr><th>Grandes masses</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
    r3("Capitaux propres",R.CP,R.CP1)+r3("Dettes financières",R.DD,R.DD1)+r3("Autres ressources stables",R.AR,R.AR)+r3("Ressources stables",RS0,R.RS1,true)+
    r3("− Actif immobilisé net",R.AZ,R.AZ1)+r3("= Fonds de roulement (FR)",FR0,R.FR1,true)+r3("− Besoin en fonds de roulement (BFR)",R.BFR,R.BFR1)+r3("= Trésorerie nette",R.TN,R.TN1,true)+
-   '</tbody></table><div class="foot-note">Bilan condensé (grandes masses), exercice '+esc(exN)+' réel vs '+esc(xp)+' projeté. La trésorerie nette est le solde du fonds de roulement et du BFR — le bilan est équilibré par construction.</div></div>';
- var tft='<div class="card"><div class="ct">3 · Flux de trésorerie prévisionnel</div><table class="stmt"><thead><tr><th>Poste</th><th class="num">Exercice '+esc(xp)+' (projeté)</th></tr></thead><tbody>'+
-   r2("Trésorerie nette au 31/12/"+esc(exN),R.TN)+
-   r2("Capacité d’autofinancement (CAFG)",R.CAFG1)+r2("− Variation du besoin en fonds de roulement",-R.dBFR)+r2("= Flux de trésorerie opérationnels",R.fluxOp,true)+
-   r2("Flux d’investissement (acquisitions)",R.fluxInv)+r2("Flux de financement (emprunts, capital, dividendes)",R.fluxFin)+r2("= Variation de trésorerie",R.dTN,true)+
-   r2("Trésorerie nette prévisionnelle au 31/12/"+esc(xp),R.TN1,true)+
-   '</tbody></table></div>';
+   '</tbody></table><div class="foot-note">Bilan condensé (grandes masses), '+esc(exN)+' réel vs '+esc(xp)+' projeté. Équilibré par construction : trésorerie nette = fonds de roulement − BFR.</div></div>';
+ var hasN1=!!store.computed.N1;
+ var TN0=vN1("BU")-vN1("DT"), BFR0=vN1("BK")-vN1("DP"), AZ0=vN1("AZ");
+ var CAFGr=cN("XI")+R.dot, dBFRr=R.BFR-BFR0, fluxOpr=CAFGr-dBFRr, investr=(R.AZ-AZ0)+R.dot, fluxInvr=-investr, dTNr=R.TN-TN0, fluxFinr=dTNr-fluxOpr-fluxInvr;
+ function rf3(lab,real,proj,st){ var rc=hasN1?fmt(real):"–", vc=hasN1?fvarp(proj,real):""; return '<tr class="'+(st?"tot":"")+'"><td>'+lab+'</td><td class="num">'+rc+'</td><td class="num">'+fmt(proj)+'</td><td class="num">'+vc+'</td></tr>'; }
+ var tft='<div class="card"><div class="ct">3 · Flux de trésorerie prévisionnel</div><table class="stmt" style="table-layout:fixed">'+CG+'<thead><tr><th>Poste</th><th class="num">'+esc(exN)+' (réel)</th><th class="num">'+esc(xp)+' (projeté)</th><th class="num">Var.</th></tr></thead><tbody>'+
+   rf3("Capacité d’autofinancement (CAFG)",CAFGr,R.CAFG1)+
+   rf3("− Variation du besoin en fonds de roulement",-dBFRr,-R.dBFR)+
+   rf3("= Flux de trésorerie opérationnels",fluxOpr,R.fluxOp,true)+
+   rf3("Flux d’investissement (acquisitions)",fluxInvr,R.fluxInv)+
+   rf3("Flux de financement (emprunts, capital, dividendes)",fluxFinr,R.fluxFin)+
+   rf3("= Variation de trésorerie",dTNr,R.dTN,true)+
+   rf3("Trésorerie nette de clôture",R.TN,R.TN1,true)+
+   '</tbody></table><div class="foot-note">'+(hasN1?("Colonne "+esc(exN)+" reconstituée (indicative) à partir des bilans "+esc(exN1)+" et "+esc(exN)+"."):"Ajoute l’exercice "+esc(exN1)+" pour comparer avec le réel.")+'</div></div>';
  var dRN=R.RN1-R.RN;
  var comment='<div class="ribbon" style="background:var(--lblue);color:var(--navy);border-left:4px solid var(--blue)">Scénario '+esc(xp)+' : chiffre d’affaires '+fmt(R.CA1)+' (croissance '+_pr1(P.gCA||0)+' %), résultat net '+fmt(R.RN1)+' ('+(dRN>=0?"+":"")+fmt(dRN)+' vs '+esc(exN)+'), trésorerie nette '+(R.TN1>=0?"positive":"négative")+' de '+fmt(R.TN1)+'.</div>';
  return cr+bil+tft+comment;
@@ -994,9 +1001,9 @@ function viewPrevisionnel(){
  if(!store.computed.N) return docHead("Prévisionnel N+1",store.settings.dateN)+'<div class="ribbon warn">Importe une balance pour établir un prévisionnel.</div>';
  prevInit();
  var P=PREVN1, exN=store.settings.exN, xp=String((parseInt(exN,10)||2024)+1);
- function inp(key,lab){ return '<div class="field"><label>'+lab+'</label><input class="mnum" data-pf="'+key+'" value="'+esc(String(P[key]))+'" style="width:100%;text-align:right"></div>'; }
+ function inp(key,lab){ var amt={rf:1,dot:1,inv:1,empNew:1,empRemb:1,augCap:1,div:1}; var val=amt[key]?formatNumStr(P[key]):String(P[key]); return '<div class="field"><label>'+lab+'</label><input class="mnum" data-pf="'+key+'" value="'+esc(val)+'" style="width:100%;text-align:right"></div>'; }
  function grp(t){ return '<div style="margin:12px 0 8px;font-size:12px;font-weight:600;color:var(--muted)">'+t+'</div>'; }
- var hyp='<div class="card"><details class="param-fold" open><summary class="fold-sum">Hypothèses du prévisionnel '+esc(xp)+' <span class="fold-sub">— déplier / replier pour ajuster</span></summary><div style="margin-top:12px">'+
+ var hyp='<div class="card"><details class="param-fold"><summary class="fold-sum">Hypothèses du prévisionnel '+esc(xp)+' <span class="fold-sub">— déplier / replier pour ajuster</span></summary><div style="margin-top:12px">'+
    grp("Activité & rentabilité")+
    '<div class="grid2">'+inp("gCA","Croissance du chiffre d’affaires (%)")+inp("marge","Marge d’exploitation cible (% du CA)")+'</div>'+
    '<div class="grid2">'+inp("rf","Résultat financier prévu (montant)")+inp("tis","Taux d’impôt sur le résultat (%)")+'</div>'+
@@ -1014,7 +1021,7 @@ function viewPrevisionnel(){
 }
 function wirePrevisionnel(){
  prevInit();
- document.querySelectorAll("[data-pf]").forEach(function(el){ el.oninput=function(){ PREVN1[el.getAttribute("data-pf")]=pfNum(el.value); var o=document.getElementById("prevOut"); if(o) o.innerHTML=prevOutHTML(); }; });
+ var amt={rf:1,dot:1,inv:1,empNew:1,empRemb:1,augCap:1,div:1}; document.querySelectorAll("[data-pf]").forEach(function(el){ el.oninput=function(){ var k=el.getAttribute("data-pf"); if(amt[k]){ fxFmtInput(el); PREVN1[k]=fxParse(el.value); } else { PREVN1[k]=pfNum(el.value); } var o=document.getElementById("prevOut"); if(o) o.innerHTML=prevOutHTML(); }; });
 }
 
 function viewDashboard(){
@@ -1028,7 +1035,7 @@ function viewDashboard(){
  var liq1=(vN1("BK")+vN1("BU"))/((vN1("DP")+vN1("DT"))||1);
  var dettes1=vN1("DD")+vN1("DP")+vN1("DT"), solv1=vN1("BZ")/(dettes1||1), couv1=vN1("DF")/(vN1("AZ")||1)*100;
  var mn1=cN1("XI")/(cN1("XB")||1)*100;
- function dv(n,n1,type){ var d,unit,dec; if(type==="amt"){ if(!n1) return {t:"n.a. vs N-1",s:0}; d=(n-n1)/Math.abs(n1)*100; if(d>500) return {t:"▲ +500 % vs N-1",s:1}; if(d<-500) return {t:"▼ −500 % vs N-1",s:-1}; unit=" %"; dec=1; } else if(type==="pts"){ d=n-n1; unit=" pts"; dec=1; } else { d=n-n1; unit=""; dec=2; } var a=Math.abs(d), v=(Math.round(a*Math.pow(10,dec))/Math.pow(10,dec)).toLocaleString("fr-FR"); return {t:(d>=0?"▲ +":"▼ −")+v+unit+" vs N-1",s:d}; }
+ function dv(n,n1,type){ var d,unit,dec; if(type==="amt"){ if(!n1) return {t:"n.a. vs N-1",s:0}; d=(n-n1)/Math.abs(n1)*100; if(d>500) return {t:"+500 % vs N-1",s:1}; if(d<-500) return {t:"−500 % vs N-1",s:-1}; unit=" %"; dec=1; } else if(type==="pts"){ d=n-n1; unit=" pts"; dec=1; } else { d=n-n1; unit=""; dec=2; } var a=Math.abs(d), v=(Math.round(a*Math.pow(10,dec))/Math.pow(10,dec)).toLocaleString("fr-FR"); return {t:(d>=0?"+":"−")+v+unit+" vs N-1",s:d}; }
  function card(l,val,formula,vv,ic,col){ var cls=vv.s>0?"up":(vv.s<0?"down":""); return '<div class="kpi"><div class="kpi-top"><span class="kpi-l">'+l+'<span class="kpi-i">i<span class="tip">'+esc(formula)+'</span></span></span><span class="kpi-ic" style="color:'+col+';background:'+col+'1f">'+icon(ic)+'</span></div><div class="v">'+val+'</div><div class="d '+cls+'">'+vv.t+'</div></div>'; }
  function pct(x){ return (Math.round(x*10)/10).toLocaleString("fr-FR")+" %"; }
  function nb(x){ return (Math.round(x*100)/100).toLocaleString("fr-FR"); }
@@ -1055,7 +1062,7 @@ function viewDashboard(){
   '</div>'+
   '<div class="grid2"><div class="card"><div class="ct">Structure du passif</div><div class="chartbox"><canvas id="chPassif"></canvas></div></div><div class="card"><div class="ct">Soldes intermédiaires de gestion</div><div class="chartbox"><canvas id="chSIG"></canvas></div></div></div>'+
   '<div class="grid2"><div class="card"><div class="ct">Répartition des charges</div><div class="chartbox"><canvas id="chCharges"></canvas></div></div><div class="card"><div class="ct">Produits, charges et résultat</div><div class="chartbox"><canvas id="chPC"></canvas></div></div></div>'+
-  lecture+syntheseCardHTML();
+  syntheseCardHTML();
 }
 function slotCard(slot,role){
  var rows=store.data[slot]; var info= rows? '<b>'+rows.length+' comptes</b> chargés' : 'Aucun fichier chargé';
