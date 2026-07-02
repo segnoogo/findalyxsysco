@@ -1,5 +1,5 @@
 /* Findalyx SYSCO — Service Worker (PWA hors-ligne) */
-var CACHE = 'findalyx-sysco-v35';
+var CACHE = 'findalyx-sysco-v36';
 var CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
