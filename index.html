@@ -995,7 +995,7 @@ function prevOutHTML(){
    '</tbody></table><div class="foot-note">'+(hasN1?("Colonne "+esc(exN)+" reconstituée (indicative) à partir des bilans "+esc(exN1)+" et "+esc(exN)+"."):"Ajoute l’exercice "+esc(exN1)+" pour comparer avec le réel.")+'</div></div>';
  var dRN=R.RN1-R.RN;
  var comment='<div class="ribbon" style="background:var(--lblue);color:var(--navy);border-left:4px solid var(--blue)">Scénario '+esc(xp)+' : chiffre d’affaires '+fmt(R.CA1)+' (croissance '+_pr1(P.gCA||0)+' %), résultat net '+fmt(R.RN1)+' ('+(dRN>=0?"+":"")+fmt(dRN)+' vs '+esc(exN)+'), trésorerie nette '+(R.TN1>=0?"positive":"négative")+' de '+fmt(R.TN1)+'.</div>';
- return cr+bil+tft+comment;
+ var recap='<div class="card"><div class="ct">Hypothèses retenues — prévisionnel '+esc(xp)+'</div><div style="font-size:12.5px;line-height:1.8">Croissance CA '+_pr1(P.gCA)+' % · Marge d\u2019exploitation '+_pr1(P.marge)+' % · Résultat financier '+formatNumStr(P.rf)+' · Impôt '+_pr1(P.tis)+' % · Dotations '+formatNumStr(P.dot)+' · BFR '+_pr1(P.bfrPct)+' % du CA · Investissements '+formatNumStr(P.inv)+' · Nouveaux emprunts '+formatNumStr(P.empNew)+' · Remboursements '+formatNumStr(P.empRemb)+' · Augmentation de capital '+formatNumStr(P.augCap)+' · Dividendes '+formatNumStr(P.div)+'</div></div>'; return recap+cr+bil+tft+comment;
 }
 function viewPrevisionnel(){
  if(!store.computed.N) return docHead("Prévisionnel N+1",store.settings.dateN)+'<div class="ribbon warn">Importe une balance pour établir un prévisionnel.</div>';
@@ -1003,7 +1003,7 @@ function viewPrevisionnel(){
  var P=PREVN1, exN=store.settings.exN, xp=String((parseInt(exN,10)||2024)+1);
  function inp(key,lab){ var amt={rf:1,dot:1,inv:1,empNew:1,empRemb:1,augCap:1,div:1}; var val=amt[key]?formatNumStr(P[key]):String(P[key]); return '<div class="field"><label>'+lab+'</label><input class="mnum" data-pf="'+key+'" value="'+esc(val)+'" style="width:100%;text-align:right"></div>'; }
  function grp(t){ return '<div style="margin:12px 0 8px;font-size:12px;font-weight:600;color:var(--muted)">'+t+'</div>'; }
- var hyp='<div class="card"><details class="param-fold"><summary class="fold-sum">Hypothèses du prévisionnel '+esc(xp)+' <span class="fold-sub">— déplier / replier pour ajuster</span></summary><div style="margin-top:12px">'+
+ var hyp='<div class="card no-print"><details class="param-fold"><summary class="fold-sum">Hypothèses du prévisionnel '+esc(xp)+' <span class="fold-sub">— déplier / replier pour ajuster</span></summary><div style="margin-top:12px">'+
    grp("Activité & rentabilité")+
    '<div class="grid2">'+inp("gCA","Croissance du chiffre d’affaires (%)")+inp("marge","Marge d’exploitation cible (% du CA)")+'</div>'+
    '<div class="grid2">'+inp("rf","Résultat financier prévu (montant)")+inp("tis","Taux d’impôt sur le résultat (%)")+'</div>'+
@@ -1838,7 +1838,7 @@ function exportPDF(){
  if(typeof html2canvas==="undefined"||!window.jspdf){ window.print(); return; }
  var el=document.getElementById("view"); if(!el) return;
  var btn=document.getElementById("btnPrint"); if(btn) btn.textContent="Génération…";
- html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true}).then(function(canvas){
+ html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true,ignoreElements:function(n){ return n.classList&&n.classList.contains("no-print"); }}).then(function(canvas){
    var jsPDF=window.jspdf.jsPDF, pdf=new jsPDF("p","mm","a4"); var pw=210, ph=297, m=8, iw=pw-2*m;
    var pageHpx=Math.floor(canvas.width*(ph-2*m)/iw), pages=Math.max(1,Math.ceil(canvas.height/pageHpx));
    for(var p=0;p<pages;p++){ var sh=Math.min(pageHpx,canvas.height-p*pageHpx); var c2=document.createElement("canvas"); c2.width=canvas.width; c2.height=sh; var ctx=c2.getContext("2d"); ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,c2.width,c2.height); ctx.drawImage(canvas,0,p*pageHpx,canvas.width,sh,0,0,canvas.width,sh); if(p>0) pdf.addPage(); pdf.addImage(c2.toDataURL("image/jpeg",0.92),"JPEG",m,m,iw,sh*iw/canvas.width); }
