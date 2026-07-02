@@ -839,17 +839,20 @@ function fxSynthParas(){
 }
 function fxSynthIndics(){
  var v=fxSynth();
+ var cp1=vN1("CP"), auto1=vN1("CP")/(vN1("DZ")||1)*100, fr1=vN1("DF")-vN1("AZ"), bfr1=vN1("BK")-vN1("DP"), tn1=vN1("BU")-vN1("DT"), liq1=(vN1("BK")+vN1("BU"))/((vN1("DP")+vN1("DT"))||1), solv1=vN1("BZ")/((vN1("DD")+vN1("DP")+vN1("DT"))||1);
+ function pts(n,n1){ var d=Math.round((n-n1)*10)/10; return (d>=0?"+":"\u2212")+Math.abs(d).toLocaleString("fr-FR")+" pts"; }
+ function dif(n,n1){ var d=Math.round((n-n1)*100)/100; return (d>=0?"+":"\u2212")+Math.abs(d).toLocaleString("fr-FR"); }
  return [
-  ["Chiffre d’affaires",fmt(v.CA),fmt(v.CA1)],
-  ["Résultat net",fmt(v.RN),fmt(v.RN1)],
-  ["Marge nette",_sP(v.mn),_sP(v.mn1)],
-  ["Capitaux propres",fmt(v.CP),fmt(vN1("CP"))],
-  ["Autonomie financière",_sP(v.auto),_sP(vN1("CP")/(vN1("DZ")||1)*100)],
-  ["Fonds de roulement",fmt(v.fr),fmt(vN1("DF")-vN1("AZ"))],
-  ["Besoin en fonds de roulement",fmt(v.bfr),fmt(vN1("BK")-vN1("DP"))],
-  ["Trésorerie nette",fmt(v.tn),fmt(vN1("BU")-vN1("DT"))],
-  ["Liquidité générale",_sR(v.liq),_sR((vN1("BK")+vN1("BU"))/((vN1("DP")+vN1("DT"))||1))],
-  ["Solvabilité générale",_sR(v.solv),_sR(vN1("BZ")/((vN1("DD")+vN1("DP")+vN1("DT"))||1))]
+  ["Chiffre d\u2019affaires",fmt(v.CA),fmt(v.CA1),fvarp(v.CA,v.CA1)],
+  ["R\u00e9sultat net",fmt(v.RN),fmt(v.RN1),fvarp(v.RN,v.RN1)],
+  ["Marge nette",_sP(v.mn),_sP(v.mn1),pts(v.mn,v.mn1)],
+  ["Capitaux propres",fmt(v.CP),fmt(cp1),fvarp(v.CP,cp1)],
+  ["Autonomie financi\u00e8re",_sP(v.auto),_sP(auto1),pts(v.auto,auto1)],
+  ["Fonds de roulement",fmt(v.fr),fmt(fr1),fvarp(v.fr,fr1)],
+  ["Besoin en fonds de roulement",fmt(v.bfr),fmt(bfr1),fvarp(v.bfr,bfr1)],
+  ["Tr\u00e9sorerie nette",fmt(v.tn),fmt(tn1),fvarp(v.tn,tn1)],
+  ["Liquidit\u00e9 g\u00e9n\u00e9rale",_sR(v.liq),_sR(liq1),dif(v.liq,liq1)],
+  ["Solvabilit\u00e9 g\u00e9n\u00e9rale",_sR(v.solv),_sR(solv1),dif(v.solv,solv1)]
  ];
 }
 function syntheseCardHTML(){
@@ -861,7 +864,7 @@ function exportSyntheseWord(){
  if(!store.computed.N){ alert("Importe d’abord une balance."); return; }
  var s=store.settings, ent=esc(s.entite||"Société");
  var paras=fxSynthParas().map(function(t){ return '<p style="margin:0 0 10px;line-height:1.5">'+esc(t)+'</p>'; }).join("");
- var rows=fxSynthIndics().map(function(r){ return '<tr><td>'+esc(r[0])+'</td><td style="text-align:right">'+esc(r[1])+'</td><td style="text-align:right">'+esc(r[2])+'</td></tr>'; }).join("");
+ var rows=fxSynthIndics().map(function(r){ return '<tr><td>'+esc(r[0])+'</td><td style="text-align:right">'+esc(r[1])+'</td><td style="text-align:right">'+esc(r[2])+'</td><td style="text-align:right">'+esc(r[3])+'</td></tr>'; }).join("");
  var _lg=cabLogo()||window.__LOGO__; var logo=_lg?'<img src="'+_lg+'" width="150" style="width:150px;height:auto"/>':'';
  var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Note de synthèse</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#1f2937;font-size:11pt">'+
   '<table style="width:100%"><tr><td>'+logo+'</td><td style="text-align:right;font-size:9pt;color:#6b7280">Note de synthèse<br/>Exercice clos le '+esc(s.dateN)+'</td></tr></table>'+
@@ -869,7 +872,7 @@ function exportSyntheseWord(){
   '<div style="color:#6b7280;font-size:10pt;margin-bottom:14px">Commentaire de gestion — Système Normal SYSCOHADA · '+esc(s.pays||"")+' · Montants en '+esc(uniteLabel())+'</div>'+
   '<h2 style="color:#172554;font-size:13pt;border-bottom:2px solid #172554;padding-bottom:4px">Analyse de la situation</h2>'+paras+
   '<h2 style="color:#172554;font-size:13pt;border-bottom:2px solid #172554;padding-bottom:4px;margin-top:16px">Indicateurs clés</h2>'+
-  '<table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:10pt"><tr style="background:#172554;color:#ffffff"><th style="text-align:left">Indicateur</th><th>Exercice '+esc(s.exN)+'</th><th>Exercice '+esc(s.exN1)+'</th></tr>'+rows+'</table>'+
+  '<table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:10pt"><tr style="background:#172554;color:#ffffff"><th style="text-align:left">Indicateur</th><th>Exercice '+esc(s.exN)+'</th><th>Exercice '+esc(s.exN1)+'</th><th>Variation</th></tr>'+rows+'</table>'+
   '<p style="font-size:8pt;color:#9aa6bd;margin-top:16px">Document généré automatiquement par Findalyx SYSCO à partir des états financiers. À relire et valider avant diffusion. Ne constitue pas un conseil financier.</p>'+
   '</body></html>';
  var safe=(String(s.entite||"societe").replace(/[^0-9A-Za-zÀ-ÿ]+/g,"_").replace(/^_+|_+$/g,"")||"societe").slice(0,40);
